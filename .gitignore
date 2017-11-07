@@ -1,3 +1,6 @@
 [Oo]bj/
 [Bb]in/
 *unversioned*
+node_modules/
+*lock.json
+[Dd]ist/
