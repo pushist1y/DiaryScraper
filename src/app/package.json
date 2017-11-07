@@ -33,7 +33,8 @@
       "category": "cross-platform-desktop"
     },
     "linux": {
-      "target": ["snap"]
+      "category": "cross-platform-desktop",
+      "target": ["dir"]
     },
     "win": {
       "target": [

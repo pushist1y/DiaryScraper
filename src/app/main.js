@@ -71,6 +71,9 @@ function startApi() {
   if (os.platform() === 'darwin') {
     apipath = path.join(__dirname, '..//api//DiaryScraperCore//bin//dist//osx//DiaryScraperCore')
   }
+  if(os.platform() === 'linux'){
+    apipath = path.join(__dirname, '..//api//DiaryScraperCore//bin//dist//linux//DiaryScraperCore')
+  }
   apiProcess = proc(apipath)
 
   apiProcess.stdout.on('data', (data) => {
