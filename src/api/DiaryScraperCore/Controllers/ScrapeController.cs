@@ -33,10 +33,10 @@ namespace DiaryScraperCore.Controllers
         public IActionResult New()
         {
             var descriptor = new ScrapeTaskDescriptor();
-            descriptor.DiaryUrl = "http://6224.diary.ru";
+            descriptor.DiaryUrl = "http://diary.ru";
             descriptor.WorkingDir = "d:\\temp\\scraper";
 
-            _taskRunner.AddTask(descriptor);
+            
 
             return Json(descriptor);
         }

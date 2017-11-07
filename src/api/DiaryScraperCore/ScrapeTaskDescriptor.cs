@@ -18,7 +18,9 @@ namespace DiaryScraperCore
         [JsonIgnore]
         public Task InnerTask { get; set; }
         [JsonIgnore]
-        public CancellationToken Token {get;set;}
+        public CancellationToken Token { get; set; }
+        public DateTime ScrapeStart { get; set; } = DateTime.MinValue;
+        public DateTime ScrapeEnd { get; set; } = DateTime.MaxValue;
     }
 
 
@@ -31,5 +33,7 @@ namespace DiaryScraperCore
         public long ImagesDownloaded { get; set; }
         public long BytesDownloaded { get; set; }
         public DateTime LastUpdated { get; set; }
+        public DateTime StartedAt { get; set; }
+        public int DatePagesDiscovered { get; set; }
     }
 }
