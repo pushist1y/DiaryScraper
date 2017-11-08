@@ -21,6 +21,8 @@ namespace DiaryScraperCore
         public CancellationToken Token { get; set; }
         public DateTime ScrapeStart { get; set; } = DateTime.MinValue;
         public DateTime ScrapeEnd { get; set; } = DateTime.MaxValue;
+        public bool Overwrite { get; set; } = false;
+        public int RequestDelay { get; set; } = 1000;
     }
 
 
@@ -35,5 +37,6 @@ namespace DiaryScraperCore
         public DateTime LastUpdated { get; set; }
         public DateTime StartedAt { get; set; }
         public int DatePagesDiscovered { get; set; }
+        public int DatePagesProcessed { get; set; }
     }
 }
