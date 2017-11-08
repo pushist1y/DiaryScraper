@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -25,6 +27,9 @@ namespace DiaryScraperCore
         {
             services.AddMvc();
             services.AddSingleton<TaskRunner>();
+            services.AddDbContext<ScrapeContext>((options) => {
+                options.UseSqlite("Data Source=scrape.db");
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -36,6 +41,9 @@ namespace DiaryScraperCore
             }
 
             app.UseMvc();
+
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
         }
     }
 }

@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Cloudflare_Bypass;
+using Microsoft.EntityFrameworkCore;
 
 namespace DiaryScraperCore
 {
@@ -17,6 +20,7 @@ namespace DiaryScraperCore
         private readonly CF_WebClient _webClient;
         private string _diaryBaseUrl;
         private string _diaryName;
+        private ScrapeContext _context;
         public DiaryScraper(ScrapeTaskDescriptor descriptor) : this(descriptor, null, null)
         {
 
@@ -59,8 +63,7 @@ namespace DiaryScraperCore
         {
             var calendarUrl = _diaryBaseUrl + "/?calendar";
             var html = _webClient.DownloadString(calendarUrl);
-            _descriptor.Progress.BytesDownloaded += html.Length;
-            _descriptor.Progress.PagesDownloaded += 1;
+            _descriptor.Progress.PageDownloaded(html);
             var matches = Regex.Matches(html, @"calendar&year=(\d+)");
             if (matches.Count <= 0)
             {
@@ -86,8 +89,8 @@ namespace DiaryScraperCore
                 }
                 Thread.Sleep(_descriptor.RequestDelay); // delay web requests
                 html = _webClient.DownloadString(yearUrl);
-                _descriptor.Progress.BytesDownloaded += html.Length;
-                _descriptor.Progress.PagesDownloaded += 1;
+
+                _descriptor.Progress.PageDownloaded(html);
 
                 matches = Regex.Matches(html, @"diary.ru(\/\?date=(\d+)-(\d+)-(\d+))");
                 foreach (Match m in matches)
@@ -107,6 +110,15 @@ namespace DiaryScraperCore
             return true;
         }
 
+        private void CreateContext()
+        {
+            var dbPath = Path.Combine(_descriptor.WorkingDir, _diaryName, "scrape.db");
+            var optionsBuilder = new DbContextOptionsBuilder();
+            optionsBuilder.UseSqlite($@"Data Source={dbPath}");
+            _context = new ScrapeContext(optionsBuilder.Options);
+            _context.Database.Migrate();
+        }
+
         private void DoWork(CancellationToken cancellationToken)
         {
             var startTime = DateTime.Now;
@@ -117,7 +129,7 @@ namespace DiaryScraperCore
                 return;
             }
 
-            
+
 
             if (!CheckDiaryUrl())
             {
@@ -126,6 +138,7 @@ namespace DiaryScraperCore
             }
 
             EnsureDirs();
+            CreateContext();
 
             if (!string.IsNullOrEmpty(_login) && !string.IsNullOrEmpty(_pass))
             {
@@ -140,27 +153,19 @@ namespace DiaryScraperCore
 
             _descriptor.Progress.DatePagesDiscovered = _dateUrls.Count;
 
+            _postsProcessed = _context.Posts.ToDictionary(p => p.Url, p => p);
+            _imagesProcessed = _context.Images.ToDictionary(i => i.Url, i => i);
+
             if (!ScanDateUrls(cancellationToken))
             {
                 _descriptor.Error = "Error checking calendar (probably not enough permissions)";
                 return;
             }
 
-            while (true)
+            if (cancellationToken.IsCancellationRequested)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    _descriptor.Error = "Process was cancelled by user";
-                    return;
-                }
-                if (DateTime.Now - startTime > TimeSpan.FromMinutes(2))
-                {
-                    return;
-                }
-
-                Thread.Sleep(_descriptor.RequestDelay);
-                _descriptor.Progress.LastUpdated = DateTime.Now;
-                _descriptor.Progress.BytesDownloaded += 1024;
+                _descriptor.Error = "Process was cancelled by user";
+                return;
             }
         }
 
@@ -175,12 +180,13 @@ namespace DiaryScraperCore
                 }
                 Thread.Sleep(_descriptor.RequestDelay);
                 var html = _webClient.DownloadString(urlInfo.Url);
-                _descriptor.Progress.BytesDownloaded += html.Length;
-                _descriptor.Progress.PagesDownloaded += 1;
+
+                _descriptor.Progress.PageDownloaded(html);
+
                 var matches = Regex.Matches(html, pattern);
                 foreach (Match m in matches)
                 {
-                    Thread.Sleep(_descriptor.RequestDelay);
+
                     var postInfo = new DateUrlInfo
                     {
                         Url = "http://" + m.Groups[1].Value,
@@ -217,50 +223,115 @@ namespace DiaryScraperCore
             }
         }
 
-        private Dictionary<string, string> _imagesProcessed = new Dictionary<string, string>();
+        private Dictionary<string, DiaryPost> _postsProcessed = new Dictionary<string, DiaryPost>();
+        private Dictionary<string, DiaryImage> _imagesProcessed = new Dictionary<string, DiaryImage>();
 
         private void DownloadPost(DateUrlInfo urlInfo)
         {
-            var fileName = urlInfo.PostDate.ToString("yyyy-MM-dd") + "-" + Guid.NewGuid().ToString("n") + ".html";
+            if (_postsProcessed.TryGetValue(urlInfo.Url, out var processedPost))
+            {
+                if (File.Exists(processedPost.LocalPath))
+                {
+                    if (_descriptor.Overwrite)
+                    {
+                        Console.WriteLine("Overwriting processed post: " + urlInfo.Url);
+                        File.Delete(processedPost.LocalPath);
+                        _context.Posts.Remove(processedPost);
+                        _context.SaveChanges();
+                        _postsProcessed.Remove(urlInfo.Url);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Skipping processed post: " + urlInfo.Url);
+                        return;
+                    }
+                }
+            }
+
+            var fNameMatch = Regex.Match(urlInfo.Url, @"([^\/]*)$");
+            if (!fNameMatch.Success)
+            {
+                return;
+            }
+            var fileName = urlInfo.PostDate.ToString("yyyy-MM-dd") + "-" + fNameMatch.Groups[1].Value;
             fileName = Path.Combine(_descriptor.WorkingDir, _diaryName, "posts", fileName);
 
-            var html = _webClient.DownloadString(urlInfo.Url);
-            _descriptor.Progress.BytesDownloaded += html.Length;
-            _descriptor.Progress.PagesDownloaded += 1;
-            using (var f = File.CreateText(fileName))
+            Thread.Sleep(_descriptor.RequestDelay);
+            Console.WriteLine("Downloading post: " + urlInfo.Url);
+            var bytes = _webClient.DownloadData(urlInfo.Url);
+
+            _descriptor.Progress.PageDownloaded(bytes);
+            using (var f = File.Create(fileName))
             {
-                f.Write(html);
+                f.Write(bytes, 0, bytes.Length);
             }
+
+            var post = new DiaryPost();
+            post.Url = urlInfo.Url;
+            post.LocalPath = fileName;
+            _context.Posts.Add(post);
+            _context.SaveChanges();
+            _postsProcessed[post.Url] = post;
+
+
+            var enc1251 = Encoding.GetEncoding(1251);
+            var html = enc1251.GetString(bytes);
 
             var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))");
             foreach (Match m in matches)
             {
                 var imageUrl = m.Groups[1].Value;
-                if (_imagesProcessed.ContainsKey(imageUrl))
-                {
-                    continue;
-                }
-
-                var fNameMatch = Regex.Match(imageUrl, @"([^\/]*)$");
-                if (!fNameMatch.Success)
-                {
-                    Console.WriteLine($"Url skipped: {imageUrl}");
-                    continue;
-                }
-
-                var imgFileName = Guid.NewGuid().ToString("n") + "-" + fNameMatch.Groups[1].Value;
-                imgFileName = Path.Combine(_descriptor.WorkingDir, _diaryName, "images", imgFileName);
-
-                var data = _webClient.DownloadData(imageUrl);
-                _descriptor.Progress.BytesDownloaded += data.Length;
-                _descriptor.Progress.ImagesDownloaded += 1;
-                using (var f = File.Create(imgFileName))
-                {
-                    f.Write(data, 0, data.Length);
-                }
-
-                _imagesProcessed[imageUrl] = imgFileName;
+                DownloadImage(imageUrl);
             }
+        }
+
+        private void DownloadImage(string imageUrl)
+        {
+            if (_imagesProcessed.TryGetValue(imageUrl, out var imageProcessed))
+            {
+                if (File.Exists(imageProcessed.LocalPath) )
+                {
+                    if (_descriptor.Overwrite && !imageProcessed.JustCreated)
+                    {
+                        Console.WriteLine("Overwriting processed image: " + imageUrl);
+                        File.Delete(imageProcessed.LocalPath);
+                        _context.Images.Remove(imageProcessed);
+                        _context.SaveChanges();
+                        _imagesProcessed.Remove(imageUrl);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Skipping processed image: " + imageUrl);
+                        return;
+                    }
+                }
+            }
+
+            var fNameMatch = Regex.Match(imageUrl, @"([^\/]*)$");
+            if (!fNameMatch.Success)
+            {
+                Console.WriteLine($"Url skipped: {imageUrl}");
+                return;
+            }
+
+            var imgFileName = Guid.NewGuid().ToString("n") + "-" + fNameMatch.Groups[1].Value;
+            imgFileName = Path.Combine(_descriptor.WorkingDir, _diaryName, "images", imgFileName);
+
+            Console.WriteLine("Downloading image: " + imageUrl);
+            var data = _webClient.DownloadData(imageUrl);
+            _descriptor.Progress.ImageDownloaded(data);
+            using (var f = File.Create(imgFileName))
+            {
+                f.Write(data, 0, data.Length);
+            }
+
+            var image = new DiaryImage();
+            image.Url = imageUrl;
+            image.JustCreated = true;
+            image.LocalPath = imgFileName;
+            _context.Images.Add(image);
+            _context.SaveChanges();
+            _imagesProcessed[image.Url] = image;
         }
 
         private void Login()

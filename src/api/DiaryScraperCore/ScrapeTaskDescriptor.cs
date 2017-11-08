@@ -30,7 +30,6 @@ namespace DiaryScraperCore
     public class ScrapeTaskProgress
     {
         public string CurrentUrl { get; set; }
-        public long UrlsProcessed { get; set; }
         public long PagesDownloaded { get; set; }
         public long ImagesDownloaded { get; set; }
         public long BytesDownloaded { get; set; }
@@ -38,5 +37,25 @@ namespace DiaryScraperCore
         public DateTime StartedAt { get; set; }
         public int DatePagesDiscovered { get; set; }
         public int DatePagesProcessed { get; set; }
+
+        public void PageDownloaded(byte[] data)
+        {
+            BytesDownloaded += data.Length;
+            PagesDownloaded += 1;
+        }
+
+        public void PageDownloaded(string html)
+        {
+            BytesDownloaded += System.Text.Encoding.ASCII.GetByteCount(html);
+            PagesDownloaded += 1;
+            LastUpdated = DateTime.Now;
+        }
+
+        public void ImageDownloaded(byte[] data)
+        {
+            BytesDownloaded += data.Length;
+            ImagesDownloaded += 1;
+            LastUpdated = DateTime.Now;
+        }
     }
 }
