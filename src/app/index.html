@@ -1,29 +1,75 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Contacts App</title>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="node_modules/angularjs-datepicker/dist/angular-datepicker.min.css" rel="stylesheet" type="text/css" />
+
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+    
+    <script type="text/javascript" src="node_modules/jquery/dist/jquery.js"></script>
+    <script type="text/javascript" src="node_modules/popper.js/dist/umd/popper.js"></script>
+    <script type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="node_modules/angular/angular.min.js"></script>
+    <script type="text/javascript" src="node_modules/angularjs-datepicker/dist/angular-datepicker.min.js"></script>
+
+    <script>if (window.module) module = window.module;</script>
+    
+    
 </head>
+
 <body>
-    <div class="container" ng-controller="ContactsCtrl as ctrl">
-        <h1>{{ctrl.Title}}</h1>
-        <p style="color: red" ng-show="ctrl.ErrorMessage">{{ctrl.ErrorMessage}}</p>
-        <table >
-            <thead>
-                <tr>
-                    <th style="min-width: 80px;">First name</th>
-                    <th style="min-width: 80px;">Last name</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr ng-repeat="contact in ctrl.Contacts">
-                    <td>{{ contact.firstName }}</td>
-                    <td>{{ contact.lastName }}</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="container-fluid" >
+            <div class="row">
+                <div class="col">1</div>
+                <div class="col">2</div>
+            </div>
+            </div>
+    <div class="container-fluid" ng-controller="ScrapeCtrl as ctrl">
+        <div class="row">
+            <div class="col">
+                <h1>{{ctrl.Title}}</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <input type="text" class="form-control" aria-label="Working directory" disabled ng-model="workingDir" />
+                    <span class="input-group-btn">
+                        <button class="btn btn-secondary" type="button" ng-click="btnSelectDirectoryClick()">Go!</button>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+
+            </div>
+            <div class="col">
+                <datepicker date-format="yyyy-MM-dd" selector="form-control">
+                    <div class="input-group">
+                        <span class="input-group-addon">
+                            <input type="checkbox" aria-label="Checkbox for following text input">
+                        </span>
+                        <span class="input-group-addon">Дата начала</span>
+                        <input ng-model="dateStart" type="text" class="form-control" />
+                        <!-- <span class="input-group-addon">
+                            <i>.</i>
+                        </span> -->
+                    </div>
+                </datepicker>
+            </div>
+        </div>
     </div>
 </body>
-<script type="text/javascript" src="node_modules/angular/angular.min.js"></script>
+
+
 <script type="text/javascript" src="app.js"></script>
 </html>
