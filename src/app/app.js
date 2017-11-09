@@ -9,13 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     angular.bootstrap(document, ['ContactsApp']);
 });
 
-document.getElementById('btnSelectDirectory').addEventListener('click', _ => {
-    //alert("test");
 
-
-
-
-});
 
 app.controller('ContactsCtrl', function (ContactsService) {
     var ctrl = this;
