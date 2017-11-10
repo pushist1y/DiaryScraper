@@ -1,3 +1,5 @@
+//import { setTimeout } from 'timers';
+
 'use strict';
 const electron = require('electron');
 const dialog = electron.remote.dialog;
@@ -27,12 +29,19 @@ app.controller('ContactsCtrl', function (ContactsService) {
     }
 });
 
-app.controller('ScrapeCtrl', function ($scope) {
+app.controller('ScrapeCtrl', function ($scope, $timeout, $interval) {
     var ctrl = this;
-    ctrl.Title = 'Scrape controller';
+    ctrl.Title = 'Выгрузка дневника';
 
-    $scope.workingDir = "qq";
+    $scope.inputEnabled = true;
+    $scope.workingDir = "";
     $scope.dateStart = "2000-01-01";
+    $scope.dateEnd = "2020-01-01";
+    $scope.diaryName = "";
+    $scope.dateStartEnabled = false;
+    $scope.dateEndEnabled = false;
+    $scope.overwrite = false;
+    $scope.diaryNamePattern = /^[\w-]*$/;
 
     $scope.btnSelectDirectoryClick = () => {
         dialog.showOpenDialog(currentWindow, {
@@ -41,6 +50,28 @@ app.controller('ScrapeCtrl', function ($scope) {
             $scope.workingDir = filePaths[0];
             $scope.$apply();
         });
+    };
+
+    $scope.btnStartClick = () => {
+        $scope.inputEnabled = false;
+        if ($scope.mainForm.$invalid) {
+            angular.forEach($scope.mainForm.$error, function (field) {
+                angular.forEach(field, function (errorField) {
+                    errorField.$setTouched();
+                });
+            });
+        }
+
+        let progress = 0;
+        $interval(() => {
+            progress += 1;
+            $("#scrapeProgress").width(progress.toString() + "%");
+            $("#scrapeProgress").text(progress.toString() + "%");
+        }, 100, 100);
+        
+        $timeout(() => {
+            $scope.inputEnabled = true;
+        }, 3000);
     };
 });
 
