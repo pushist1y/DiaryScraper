@@ -29,7 +29,7 @@ app.controller('ContactsCtrl', function (ContactsService) {
     }
 });
 
-app.controller('ScrapeCtrl', function ($scope, $timeout, $interval) {
+app.controller('ScrapeCtrl', function ($scope, $timeout, $interval, ScrapeService) {
     var ctrl = this;
     ctrl.Title = 'Выгрузка дневника';
 
@@ -42,6 +42,10 @@ app.controller('ScrapeCtrl', function ($scope, $timeout, $interval) {
     $scope.dateEndEnabled = false;
     $scope.overwrite = false;
     $scope.diaryNamePattern = /^[\w-]*$/;
+    $scope.diaryLogin = "";
+    $scope.diaryPassword = "";
+    $scope.inProgress = "notstarted";
+    $scope.progressRefresh = undefined;
 
     $scope.btnSelectDirectoryClick = () => {
         dialog.showOpenDialog(currentWindow, {
@@ -54,6 +58,9 @@ app.controller('ScrapeCtrl', function ($scope, $timeout, $interval) {
 
     $scope.btnStartClick = () => {
         $scope.inputEnabled = false;
+        $timeout(() => {
+            $scope.inputEnabled = true;
+        }, 300);
         if ($scope.mainForm.$invalid) {
             angular.forEach($scope.mainForm.$error, function (field) {
                 angular.forEach(field, function (errorField) {
@@ -61,18 +68,55 @@ app.controller('ScrapeCtrl', function ($scope, $timeout, $interval) {
                 });
             });
         }
+        if (!$scope.mainForm.$valid) {
+            return;
+        }
 
-        let progress = 0;
-        $interval(() => {
-            progress += 1;
-            $("#scrapeProgress").width(progress.toString() + "%");
-            $("#scrapeProgress").text(progress.toString() + "%");
-        }, 100, 100);
+        startScrape().then(() => {
+            $scope.inProgress = "started";
+            let progress = 0;
+            $scope.progressRefresh = $interval(() => {
+                progress += 1;
+                $("#scrapeProgress").width(progress.toString() + "%");
+                $("#scrapeProgress").text(progress.toString() + "%");
+            }, 100, 100);
+        })
+
         
-        $timeout(() => {
-            $scope.inputEnabled = true;
-        }, 3000);
+
+
     };
+
+    $scope.btnCancelClick = () => {
+        if (angular.isDefined($scope.progressRefresh)) {
+            $interval.cancel($scope.progressRefresh);
+            $scope.progressRefresh = undefined;
+        }
+
+        $scope.inProgress = "finished";
+    };
+
+    $scope.btnRestartClick = () => {
+        $scope.inProgress = "notstarted";
+    };
+
+    function startScrape() {
+        let taskDescriptor = {
+            workingDir: $scope.workingDir,
+            diaryUrl: "http://" + $scope.diaryName + ".diary.ru",
+            overwrite: $scope.overwrite
+        };
+        if ($scope.dateStartEnabled) {
+            taskDescriptor.scrapeStart = new Date($scope.dateStart);
+        }
+        if ($scope.dateEndEnabled) {
+            taskDescriptor.scrapeStart = new Date($scope.dateEnd);
+        }
+        return ScrapeService.Post(taskDescriptor, $scope.diaryLogin, $scope.diaryPassword)
+            .then((returnedData) => {
+                $scope.currentTask = returnedData;
+            });
+    }
 });
 
 app.service('ContactsService', function ($http) {
@@ -81,6 +125,29 @@ app.service('ContactsService', function ($http) {
 
     svc.Get = function () {
         return $http.get(apiUrl + '/test')
+            .then(function success(response) {
+                return response.data;
+            });
+    }
+});
+
+app.service('ScrapeService', function ($http) {
+    var svc = this;
+    var apiUrl = 'http://localhost:5000/api';
+
+    svc.Get = function (id) {
+        return $http.get(apiUrl + '/scrape/' + id)
+            .then(function success(response) {
+                return response.data;
+            });
+    }
+
+    svc.Post = function (data, login, password) {
+        var urlParams = $.param({
+            login: login,
+            password: password
+        });
+        return $http.post(apiUrl + '/scrape?' + urlParams, JSON.stringify(data))
             .then(function success(response) {
                 return response.data;
             });

@@ -30,9 +30,8 @@
 </head>
 
 <body>
-
-    <div class="container-fluid" ng-controller="ScrapeCtrl as ctrl">
-        <form name="mainForm">
+    <div ng-controller="ScrapeCtrl as ctrl">
+        <div class="container-fluid">
             <div class="row">
                 <div class="col"></div>
                 <div class="col-auto">
@@ -40,146 +39,256 @@
                 </div>
                 <div class="col"></div>
             </div>
-            <div class="row">
-                <div class="col">
-                    <div class="alert alert-danger" ng-show="mainForm.diaryNameEdit.$error.required && mainForm.diaryNameEdit.$touched">
-                        Адрес дневника должен быть заполнен
-                    </div>
-                    <div class="alert alert-danger" ng-show="mainForm.diaryNameEdit.$error.pattern && mainForm.diaryNameEdit.$touched">
-                        Адрес дневника содержит недопустимые символы
-                    </div>
-                    <div class="alert alert-danger" ng-show="mainForm.workingDirEdit.$error.required && mainForm.workingDirEdit.$touched">
-                        Необходимо указать рабочую папку
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
 
-                </div>
+            <div class="row">
+                <div class="col"></div>
                 <div class="col-8">
-                    <div class="input-group">
-                        <span class="input-group-addon">Адрес дневника:</span>
-                        <span class="input-group-addon">http://</span>
-                        <input type="text" class="form-control" required name="diaryNameEdit" ng-disabled="!inputEnabled" aria-label="Diary address"
-                            style="text-align:right;" ng-model="diaryName" ng-pattern="diaryNamePattern" />
-                        <span class="input-group-addon">.diary.ru</span>
-                    </div>
+                    <hr/>
                 </div>
-                <div class="col">
-
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-
-                </div>
-                <div class="col-8">
-                    <div class="input-group">
-                        <span class="input-group-addon">Рабочая папка:</span>
-                        <input type="text" class="form-control" name="workingDirEdit" aria-label="Working directory" disabled ng-model="workingDir"
-                            required/>
-                        <span class="input-group-btn">
-                            <button class="btn btn-secondary" ng-disabled="!inputEnabled" type="button" ng-click="btnSelectDirectoryClick()">Go!</button>
-                        </span>
-                    </div>
-                </div>
-                <div class="col">
-
-                </div>
+                <div class="col"></div>
             </div>
 
-            <div class="row">
-                <div class="col">
+            <form name="mainForm" id="mainForm" ng-show="inProgress == 'notstarted'">
 
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                    <div class="col-8">
+                        <div class="alert alert-danger" ng-show="mainForm.diaryNameEdit.$error.required && mainForm.diaryNameEdit.$touched">
+                            Адрес дневника должен быть заполнен
+                        </div>
+                        <div class="alert alert-danger" ng-show="mainForm.diaryNameEdit.$error.pattern && mainForm.diaryNameEdit.$touched">
+                            Адрес дневника содержит недопустимые символы
+                        </div>
+                        <div class="alert alert-danger" ng-show="mainForm.workingDirEdit.$error.required && mainForm.workingDirEdit.$touched">
+                            Необходимо указать рабочую папку
+                        </div>
+                        <div class="alert alert-danger" ng-show="(mainForm.diaryLogin.$error.required && mainForm.diaryLogin.$touched) || (mainForm.diaryPassword.$error.required && mainForm.diaryPassword.$touched)">
+                            Необходимо указать логин и пароль для доступа к дневнику
+                        </div>
+                    </div>
+                    <div class="col">
+
+                    </div>
                 </div>
-                <div class="col-8">
-                    <datepicker date-format="yyyy-MM-dd" selector="form-control">
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                    <div class="col-8">
                         <div class="input-group">
-                            <span class="input-group-addon">
-                                <input type="checkbox" ng-model="dateStartEnabled" ng-disabled="!inputEnabled" aria-label="Checkbock marking if scrape start date limiting is enabled">
+                            <span class="input-group-addon">Логин: </span>
+                            <input type="text" class="form-control" required name="loginEdit" ng-disabled="!inputEnabled" aria-label="Diary address"
+                                style="text-align:right;" ng-model="diaryLogin" />
+                        </div>
+                    </div>
+                    <div class="col">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            <span class="input-group-addon">Пароль: </span>
+                            <input type="password" class="form-control" required name="diaryPasswordEdit" ng-disabled="!inputEnabled" aria-label="Diary password"
+                                style="text-align:right;" ng-model="diaryPassword" />
+                        </div>
+                    </div>
+                    <div class="col">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col"></div>
+                    <div class="col-8">
+                        <hr/>
+                    </div>
+                    <div class="col"></div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            <span class="input-group-addon">Адрес дневника:</span>
+                            <span class="input-group-addon">http://</span>
+                            <input type="text" class="form-control" required name="diaryNameEdit" ng-disabled="!inputEnabled" aria-label="Diary address"
+                                style="text-align:right;" ng-model="diaryName" ng-pattern="diaryNamePattern" />
+                            <span class="input-group-addon">.diary.ru</span>
+                        </div>
+                    </div>
+                    <div class="col">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            <span class="input-group-addon">Рабочая папка:</span>
+                            <input type="text" class="form-control" name="workingDirEdit" aria-label="Working directory" disabled ng-model="workingDir"
+                                required/>
+                            <span class="input-group-btn">
+                                <button class="btn btn-secondary" ng-disabled="!inputEnabled" type="button" ng-click="btnSelectDirectoryClick()">Go!</button>
                             </span>
-                            <span class="input-group-addon">Дата начала:</span>
-                            <input ng-model="dateStart" type="text" class="form-control" ng-disabled="!(dateStartEnabled && inputEnabled)" style="text-align:right;"
-                            />
-                            <!-- <span class="input-group-addon">
+                        </div>
+                    </div>
+                    <div class="col">
+
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                    <div class="col-8">
+                        <datepicker date-format="yyyy-MM-dd" selector="form-control">
+                            <div class="input-group">
+                                <span class="input-group-addon">
+                                    <input type="checkbox" ng-model="dateStartEnabled" ng-disabled="!inputEnabled" aria-label="Checkbock marking if scrape start date limiting is enabled">
+                                </span>
+                                <span class="input-group-addon">Дата начала:</span>
+                                <input ng-model="dateStart" type="text" class="form-control" ng-disabled="!(dateStartEnabled && inputEnabled)" style="text-align:right;"
+                                />
+                                <!-- <span class="input-group-addon">
                             <i>.</i>
                         </span> -->
-                        </div>
-                    </datepicker>
-                </div>
-                <div class="col">
+                            </div>
+                        </datepicker>
+                    </div>
+                    <div class="col">
 
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-
-                </div>
-                <div class="col-8">
-                    <datepicker date-format="yyyy-MM-dd" selector="form-control">
-                        <div class="input-group">
-                            <span class="input-group-addon">
-                                <input type="checkbox" ng-model="dateEndEnabled" ng-disabled="!inputEnabled" aria-label="Checkbock marking if scrape end date limiting is enabled">
-                            </span>
-                            <span class="input-group-addon">Дата окончания:</span>
-                            <input ng-model="dateEnd" type="text" ng-disabled="!(dateEndEnabled && inputEnabled)" class="form-control" style="text-align:right;"
-                            />
-                            <!-- <span class="input-group-addon">
-                                <i>.</i>
-                            </span> -->
-                        </div>
-                    </datepicker>
-                </div>
-                <div class="col">
-
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-
-                </div>
-                <div class="col-8">
-                    <div class="input-group">
-                        <span class="input-group-addon">Перезаписывать:</span>
-                        <span class="input-group-addon">
-                            <input type="checkbox" ng-model="overwrite" ng-disabled="!inputEnabled" aria-label="Checkbox for overwrite parameter">
-                        </span>
                     </div>
                 </div>
-                <div class="col">
+                <div class="row">
+                    <div class="col">
 
+                    </div>
+                    <div class="col-8">
+                        <datepicker date-format="yyyy-MM-dd" selector="form-control">
+                            <div class="input-group">
+                                <span class="input-group-addon">
+                                    <input type="checkbox" ng-model="dateEndEnabled" ng-disabled="!inputEnabled" aria-label="Checkbock marking if scrape end date limiting is enabled">
+                                </span>
+                                <span class="input-group-addon">Дата окончания:</span>
+                                <input ng-model="dateEnd" type="text" ng-disabled="!(dateEndEnabled && inputEnabled)" class="form-control" style="text-align:right;"
+                                />
+                                <!-- <span class="input-group-addon">
+                                <i>.</i>
+                            </span> -->
+                            </div>
+                        </datepicker>
+                    </div>
+                    <div class="col">
+
+                    </div>
                 </div>
+
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            <span class="input-group-addon">Перезаписывать:</span>
+                            <span class="input-group-addon">
+                                <input type="checkbox" ng-model="overwrite" ng-disabled="!inputEnabled" aria-label="Checkbox for overwrite parameter">
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col">
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col"></div>
+                    <div class="col-8">
+                        <hr/>
+                    </div>
+                    <div class="col"></div>
+                </div>
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                    <div class="col-1">
+                        <button type="button" ng-disabled="!inputEnabled" class="btn btn-primary" ng-click="btnStartClick()">Начать</button>
+                    </div>
+                    <div class="col">
+
+                    </div>
+                </div>
+
+            </form>
+        </div>
+        <div class="container-fluid" id="progressReportDiv" ng-show="inProgress !== 'notstarted'">
+            <div class="row">
+                <div class="col"></div>
+                <div class="col-8">
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" id="scrapeProgress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="col"></div>
             </div>
+
+            <div class="row">
+                <div class="col"></div>
+                <div class="col-8">
+                    <hr/>
+                </div>
+                <div class="col"></div>
+            </div>
+            <div class="row">
+                <div class="col"></div>
+                <div class="col-4 text-right" >
+                    Идентификатор задания:
+                </div>
+                <div class="col-4">
+                    {{currentTask.guidString}}
+                </div>
+                <div class="col"></div>
+            </div>
+            <div class="row">
+                <div class="col"></div>
+                <div class="col-8">
+                    <hr/>
+                </div>
+                <div class="col"></div>
+            </div>
+
             <div class="row">
                 <div class="col">
 
                 </div>
                 <div class="col-1">
-                    <button type="button" ng-disabled="!inputEnabled" class="btn btn-primary" ng-click="btnStartClick()">Начать</button>
+                    <button type="button" class="btn btn-primary" ng-click="btnCancelClick()" ng-show="inProgress == 'started'">Отмена</button>
+                    <button type="button" class="btn btn-primary" ng-click="btnRestartClick()" ng-show="inProgress == 'finished'">Заново</button>
                 </div>
                 <div class="col">
 
                 </div>
             </div>
-            <code>mainForm.diaryNameEdit.$valid = {{mainForm.diaryNameEdit.$valid}}</code>
-            <br/>
-            <code>mainForm.diaryNameEdit.$error = {{mainForm.diaryNameEdit.$error}}</code>
-            <br/>
-            <code>mainForm.$valid = {{mainForm.$valid}}</code>
-            <br/>
-        </form>
-    </div>
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col">
-                <div class="progress">
-                    <div class="progress-bar" role="progressbar" id="scrapeProgress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-            </div>
+
         </div>
 
+        <code>mainForm.diaryNameEdit.$valid = {{mainForm.diaryNameEdit.$valid}}</code>
+        <br/>
+        <code>mainForm.diaryNameEdit.$error = {{mainForm.diaryNameEdit.$error}}</code>
+        <br/>
+        <code>mainForm.$valid = {{mainForm.$valid}}</code>
+        <br/>
+        <code>inProgress = {{inProgress}}</code>
+        <br/>
     </div>
 </body>
 
