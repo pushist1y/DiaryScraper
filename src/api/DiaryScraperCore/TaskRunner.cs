@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DiaryScraperCore
@@ -44,7 +45,20 @@ namespace DiaryScraperCore
 
             var worker = new DiaryScraper(newTask, login, password);
             worker.Run();
+        }
 
+        public ScrapeTaskDescriptor RemoveTask(string guidString)
+        {
+            var task = _tasks.FirstOrDefault(t => t.GuidString == guidString);
+            
+            if(task==null)
+            {
+                return null;
+            }
+
+            task.TokenSource.Cancel();
+            task.InnerTask.Wait();
+            return task;
         }
     }
 }

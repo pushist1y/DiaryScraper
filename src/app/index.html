@@ -137,7 +137,7 @@
                             <input type="text" class="form-control" name="workingDirEdit" aria-label="Working directory" disabled ng-model="workingDir"
                                 required/>
                             <span class="input-group-btn">
-                                <button class="btn btn-secondary" ng-disabled="!inputEnabled" type="button" ng-click="btnSelectDirectoryClick()">Go!</button>
+                                <button class="btn btn-secondary" ng-disabled="!inputEnabled" type="button" ng-click="btnSelectDirectoryClick()">Выбрать</button>
                             </span>
                         </div>
                     </div>
@@ -145,6 +145,23 @@
 
                     </div>
                 </div>
+
+                <div class="row">
+                        <div class="col">
+    
+                        </div>
+                        <div class="col-8">
+                            <div class="input-group">
+                                <span class="input-group-addon">Задержка между запросами:</span>
+                                <input type="number" class="form-control" required name="requestDelayEdit" ng-disabled="!inputEnabled" aria-label="Request delay"
+                                    style="text-align:right;" ng-model="diaryRequestDelay" >
+                                <span class="input-group-addon">мс</span>
+                            </div>
+                        </div>
+                        <div class="col">
+    
+                        </div>
+                    </div>
 
                 <div class="row">
                     <div class="col">
@@ -232,6 +249,19 @@
         </div>
         <div class="container-fluid" id="progressReportDiv" ng-show="inProgress !== 'notstarted'">
             <div class="row">
+                <div class="col">
+
+                </div>
+                <div class="col-8">
+                    <div class="alert alert-danger" ng-show="currentTask.error">
+                        {{currentTask.error}}
+                    </div>
+                </div>
+                <div class="col">
+
+                </div>
+            </div>
+            <div class="row">
                 <div class="col"></div>
                 <div class="col-8">
                     <div class="progress">
@@ -250,7 +280,7 @@
             </div>
             <div class="row">
                 <div class="col"></div>
-                <div class="col-4 text-right" >
+                <div class="col-4 text-right">
                     Идентификатор задания:
                 </div>
                 <div class="col-4">
@@ -258,6 +288,36 @@
                 </div>
                 <div class="col"></div>
             </div>
+            <div class="row">
+                <div class="col"></div>
+                <div class="col-4 text-right">
+                    Страниц скачано:
+                </div>
+                <div class="col-4">
+                    {{currentTask.progress.pagesDownloaded}}
+                </div>
+                <div class="col"></div>
+            </div>
+            <div class="row">
+                    <div class="col"></div>
+                    <div class="col-4 text-right">
+                        Изображений скачано:
+                    </div>
+                    <div class="col-4">
+                        {{currentTask.progress.imagesDownloaded}}
+                    </div>
+                    <div class="col"></div>
+                </div>
+                <div class="row">
+                        <div class="col"></div>
+                        <div class="col-4 text-right">
+                            Байт скачано:
+                        </div>
+                        <div class="col-4">
+                            {{currentTask.progress.bytesDownloaded}}
+                        </div>
+                        <div class="col"></div>
+                    </div>
             <div class="row">
                 <div class="col"></div>
                 <div class="col-8">
@@ -271,7 +331,7 @@
 
                 </div>
                 <div class="col-1">
-                    <button type="button" class="btn btn-primary" ng-click="btnCancelClick()" ng-show="inProgress == 'started'">Отмена</button>
+                    <button type="button" class="btn btn-primary" ng-click="btnCancelClick()" ng-show="inProgress == 'started'" ng-disabled="!btnCancelEnabled">Отмена</button>
                     <button type="button" class="btn btn-primary" ng-click="btnRestartClick()" ng-show="inProgress == 'finished'">Заново</button>
                 </div>
                 <div class="col">
@@ -280,15 +340,6 @@
             </div>
 
         </div>
-
-        <code>mainForm.diaryNameEdit.$valid = {{mainForm.diaryNameEdit.$valid}}</code>
-        <br/>
-        <code>mainForm.diaryNameEdit.$error = {{mainForm.diaryNameEdit.$error}}</code>
-        <br/>
-        <code>mainForm.$valid = {{mainForm.$valid}}</code>
-        <br/>
-        <code>inProgress = {{inProgress}}</code>
-        <br/>
     </div>
 </body>
 

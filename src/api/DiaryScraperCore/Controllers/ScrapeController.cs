@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Cloudflare_Bypass;
 using System.Linq;
+using System;
 
 namespace DiaryScraperCore.Controllers
 {
@@ -17,40 +18,33 @@ namespace DiaryScraperCore.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-
-            //var url = "https://thebot.net/threads/dont-panic-on-cloudflare-leaks-check-your-site-if-it-is-affected.389399/";
-            // var client = CloudflareEvader.CreateBypassedWebClient(url);
-            // var data = client.DownloadString(url);
-
-            //CF_WebClient client = new CF_WebClient();
-            //string html = client.DownloadString(url);
-            //return Ok(html);
-
             return Json(_taskRunner.TasksView);
         }
 
-        [HttpGet("new")]
-        public IActionResult New()
-        {
-            var descriptor = new ScrapeTaskDescriptor();
-            descriptor.DiaryUrl = "http://diary.ru";
-            descriptor.WorkingDir = "d:\\temp\\scraper";
-
-            
-
-            return Json(descriptor);
-        }
-
         [HttpPost]
-        public IActionResult Post()
+        public IActionResult Post([FromBody] ScrapeTaskDescriptor descriptor)
         {
-            return Ok();
+            var login = Request.GetQueryParameter("login");
+            var password = Request.GetQueryParameter("password");
+            _taskRunner.AddTask(descriptor, login, password);
+            return Json(descriptor);
         }
 
         [HttpGet("{id}")]
         public IActionResult Get(string id)
         {
             var task = _taskRunner.TasksView.FirstOrDefault(t => t.GuidString == id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+            return Json(task);
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
+        {
+            var task = _taskRunner.RemoveTask(id);
             if (task == null)
             {
                 return NotFound();

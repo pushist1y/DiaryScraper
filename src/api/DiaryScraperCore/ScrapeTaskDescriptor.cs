@@ -19,12 +19,28 @@ namespace DiaryScraperCore
         public Task InnerTask { get; set; }
         [JsonIgnore]
         public CancellationToken Token { get; set; }
+        [JsonIgnore]
+        public CancellationTokenSource TokenSource { get; set; }
         public DateTime ScrapeStart { get; set; } = DateTime.MinValue;
         public DateTime ScrapeEnd { get; set; } = DateTime.MaxValue;
         public bool Overwrite { get; set; } = false;
-        public int RequestDelay { get; set; } = 1000;
+        private int _requestDelay = 1000;
+        public int RequestDelay
+        {
+            get { return _requestDelay; }
+            set
+            {
+                if (value < 100 || value > 10000)
+                {
+                    _requestDelay = 1000;
+                }
+                else
+                {
+                    _requestDelay = value;
+                }
+            }
+        }
     }
-
 
 
     public class ScrapeTaskProgress

@@ -37,6 +37,7 @@ namespace DiaryScraperCore
         public Task Run()
         {
             var src = new CancellationTokenSource();
+            _descriptor.TokenSource = src;
             _descriptor.Progress.StartedAt = DateTime.Now;
             _descriptor.Token = src.Token;
             _descriptor.InnerTask = new Task(() => DoWork(_descriptor.Token));
@@ -125,7 +126,7 @@ namespace DiaryScraperCore
 
             if (_descriptor.ScrapeStart > _descriptor.ScrapeEnd)
             {
-                _descriptor.Error = "Scrape interval provided is wrong";
+                SetError("Scrape interval provided is wrong", cancellationToken);
                 return;
             }
 
@@ -133,7 +134,7 @@ namespace DiaryScraperCore
 
             if (!CheckDiaryUrl())
             {
-                _descriptor.Error = "Diary url is wrong";
+                SetError("Diary url is wrong", cancellationToken);
                 return;
             }
 
@@ -142,12 +143,16 @@ namespace DiaryScraperCore
 
             if (!string.IsNullOrEmpty(_login) && !string.IsNullOrEmpty(_pass))
             {
-                Login();
+                if(!Login())
+                {
+                    SetError("Login failed", cancellationToken);
+                    return;
+                }
             }
 
             if (!FillDateUrls(cancellationToken))
             {
-                _descriptor.Error = "Error checking calendar (probably not enough permissions)";
+                SetError("Error checking calendar (probably not enough permissions)", cancellationToken);
                 return;
             }
 
@@ -158,14 +163,19 @@ namespace DiaryScraperCore
 
             if (!ScanDateUrls(cancellationToken))
             {
-                _descriptor.Error = "Error checking calendar (probably not enough permissions)";
+                SetError("Ошибка при скачивании постов", cancellationToken);
                 return;
             }
 
-            if (cancellationToken.IsCancellationRequested)
-            {
-                _descriptor.Error = "Process was cancelled by user";
-                return;
+        }
+
+        private void SetError(string errorText, CancellationToken cancellationToken)
+        {
+            if(cancellationToken.IsCancellationRequested){
+                _descriptor.Error = "Операция прервана по запросу пользователя";
+            }
+            else{
+                _descriptor.Error = errorText;
             }
         }
 
@@ -289,7 +299,7 @@ namespace DiaryScraperCore
         {
             if (_imagesProcessed.TryGetValue(imageUrl, out var imageProcessed))
             {
-                if (File.Exists(imageProcessed.LocalPath) )
+                if (File.Exists(imageProcessed.LocalPath))
                 {
                     if (_descriptor.Overwrite && !imageProcessed.JustCreated)
                     {
@@ -334,18 +344,18 @@ namespace DiaryScraperCore
             _imagesProcessed[image.Url] = image;
         }
 
-        private void Login()
+        private bool Login()
         {
             if (string.IsNullOrEmpty(_login) || string.IsNullOrEmpty(_pass))
             {
-                return;
+                return false;
             }
 
             var html = _webClient.DownloadString("http://www.diary.ru/");
             var match = Regex.Match(html, @"<input[^>]*?name=""signature""[^>]*?value=""(\w+)\""[^>]*?>");
             if (!match.Success)
             {
-                return;
+                return false;
             }
 
             var signature = match.Groups[1].Value;
@@ -353,7 +363,7 @@ namespace DiaryScraperCore
             match = Regex.Match(html, @"action=""(\/login.php\?\w+)""");
             if (!match.Success)
             {
-                return;
+                return false;
             }
             var url = match.Groups[1].Value;
             url = "http://www.diary.ru" + url;
@@ -364,6 +374,13 @@ namespace DiaryScraperCore
             coll["signature"] = signature;
             Thread.Sleep(_descriptor.RequestDelay);
             var data = _webClient.UploadValues(url, "POST", coll);
+            html = data.AsAnsiString();
+            if (Regex.IsMatch(html, @"неверное имя пользователя. Или неверный пароль"))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 
