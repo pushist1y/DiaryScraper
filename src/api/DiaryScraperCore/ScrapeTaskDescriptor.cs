@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace DiaryScraperCore
@@ -24,6 +25,7 @@ namespace DiaryScraperCore
         public DateTime ScrapeStart { get; set; } = DateTime.MinValue;
         public DateTime ScrapeEnd { get; set; } = DateTime.MaxValue;
         public bool Overwrite { get; set; } = false;
+        public ILogger<TaskRunner> Logger {get;set;}
         private int _requestDelay = 1000;
         public int RequestDelay
         {

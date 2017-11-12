@@ -15,8 +15,9 @@ function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 800,
-    height: 600
-  })
+    height: 600,
+    icon: path.join(__dirname, '../../assets/icons/png/64x64.png')
+  });
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -26,7 +27,7 @@ function createWindow() {
   }))
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  //mainWindow.webContents.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Contacts App</title>
+    <title>Выгрузка дневников</title>
     <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css" />
     <link href="node_modules/angularjs-datepicker/dist/angular-datepicker.min.css" rel="stylesheet" type="text/css" />
 
@@ -25,6 +25,12 @@
     <script>
         if (window.module) module = window.module;
     </script>
+
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+    </style>
 
 
 </head>
@@ -147,21 +153,21 @@
                 </div>
 
                 <div class="row">
-                        <div class="col">
-    
-                        </div>
-                        <div class="col-8">
-                            <div class="input-group">
-                                <span class="input-group-addon">Задержка между запросами:</span>
-                                <input type="number" class="form-control" required name="requestDelayEdit" ng-disabled="!inputEnabled" aria-label="Request delay"
-                                    style="text-align:right;" ng-model="diaryRequestDelay" >
-                                <span class="input-group-addon">мс</span>
-                            </div>
-                        </div>
-                        <div class="col">
-    
+                    <div class="col">
+
+                    </div>
+                    <div class="col-8">
+                        <div class="input-group">
+                            <span class="input-group-addon">Задержка между запросами:</span>
+                            <input type="number" class="form-control" required name="requestDelayEdit" ng-disabled="!inputEnabled" aria-label="Request delay"
+                                style="text-align:right;" ng-model="diaryRequestDelay">
+                            <span class="input-group-addon">мс</span>
                         </div>
                     </div>
+                    <div class="col">
+
+                    </div>
+                </div>
 
                 <div class="row">
                     <div class="col">
@@ -299,25 +305,25 @@
                 <div class="col"></div>
             </div>
             <div class="row">
-                    <div class="col"></div>
-                    <div class="col-4 text-right">
-                        Изображений скачано:
-                    </div>
-                    <div class="col-4">
-                        {{currentTask.progress.imagesDownloaded}}
-                    </div>
-                    <div class="col"></div>
+                <div class="col"></div>
+                <div class="col-4 text-right">
+                    Изображений скачано:
                 </div>
-                <div class="row">
-                        <div class="col"></div>
-                        <div class="col-4 text-right">
-                            Байт скачано:
-                        </div>
-                        <div class="col-4">
-                            {{currentTask.progress.bytesDownloaded}}
-                        </div>
-                        <div class="col"></div>
-                    </div>
+                <div class="col-4">
+                    {{currentTask.progress.imagesDownloaded}}
+                </div>
+                <div class="col"></div>
+            </div>
+            <div class="row">
+                <div class="col"></div>
+                <div class="col-4 text-right">
+                    Байт скачано:
+                </div>
+                <div class="col-4">
+                    {{currentTask.progress.bytesDownloaded}}
+                </div>
+                <div class="col"></div>
+            </div>
             <div class="row">
                 <div class="col"></div>
                 <div class="col-8">

@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cloudflare_Bypass;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DiaryScraperCore
 {
@@ -122,59 +123,70 @@ namespace DiaryScraperCore
 
         private void DoWork(CancellationToken cancellationToken)
         {
-            var startTime = DateTime.Now;
-
-            if (_descriptor.ScrapeStart > _descriptor.ScrapeEnd)
+            try
             {
-                SetError("Scrape interval provided is wrong", cancellationToken);
-                return;
-            }
+                var startTime = DateTime.Now;
 
-
-
-            if (!CheckDiaryUrl())
-            {
-                SetError("Diary url is wrong", cancellationToken);
-                return;
-            }
-
-            EnsureDirs();
-            CreateContext();
-
-            if (!string.IsNullOrEmpty(_login) && !string.IsNullOrEmpty(_pass))
-            {
-                if(!Login())
+                if (_descriptor.ScrapeStart > _descriptor.ScrapeEnd)
                 {
-                    SetError("Login failed", cancellationToken);
+                    SetError("Scrape interval provided is wrong", cancellationToken);
+                    return;
+                }
+
+
+
+                if (!CheckDiaryUrl())
+                {
+                    SetError("Diary url is wrong", cancellationToken);
+                    return;
+                }
+
+                EnsureDirs();
+                CreateContext();
+
+                if (!string.IsNullOrEmpty(_login) && !string.IsNullOrEmpty(_pass))
+                {
+                    if (!Login())
+                    {
+                        SetError("Login failed", cancellationToken);
+                        return;
+                    }
+                }
+
+                if (!FillDateUrls(cancellationToken))
+                {
+                    SetError("Error checking calendar (probably not enough permissions)", cancellationToken);
+                    return;
+                }
+
+                _descriptor.Progress.DatePagesDiscovered = _dateUrls.Count;
+
+                _postsProcessed = _context.Posts.ToDictionary(p => p.Url, p => p);
+                _imagesProcessed = _context.Images.ToDictionary(i => i.Url, i => i);
+
+                if (!ScanDateUrls(cancellationToken))
+                {
+                    SetError("Ошибка при скачивании постов", cancellationToken);
                     return;
                 }
             }
-
-            if (!FillDateUrls(cancellationToken))
+            catch (Exception e)
             {
-                SetError("Error checking calendar (probably not enough permissions)", cancellationToken);
-                return;
-            }
-
-            _descriptor.Progress.DatePagesDiscovered = _dateUrls.Count;
-
-            _postsProcessed = _context.Posts.ToDictionary(p => p.Url, p => p);
-            _imagesProcessed = _context.Images.ToDictionary(i => i.Url, i => i);
-
-            if (!ScanDateUrls(cancellationToken))
-            {
-                SetError("Ошибка при скачивании постов", cancellationToken);
-                return;
+                _descriptor.Logger.LogError(e, "Error");
+                SetError(e.Message, cancellationToken);
+                throw;
             }
 
         }
 
         private void SetError(string errorText, CancellationToken cancellationToken)
         {
-            if(cancellationToken.IsCancellationRequested){
+            if (cancellationToken.IsCancellationRequested)
+            {
                 _descriptor.Error = "Операция прервана по запросу пользователя";
             }
-            else{
+            else
+            {
                 _descriptor.Error = errorText;
             }
         }

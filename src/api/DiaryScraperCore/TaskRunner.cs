@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace DiaryScraperCore
 {
@@ -23,6 +24,12 @@ namespace DiaryScraperCore
         //     }
         // }
 
+        private ILogger<TaskRunner> _logger;
+        public TaskRunner(ILogger<TaskRunner> logger)
+        {
+            _logger = logger;
+        }
+
         private ReadOnlyCollection<ScrapeTaskDescriptor> _readOnlyTasks;
         public ReadOnlyCollection<ScrapeTaskDescriptor> TasksView
             => _readOnlyTasks ?? (_readOnlyTasks = new ReadOnlyCollection<ScrapeTaskDescriptor>(_tasks));
@@ -30,6 +37,8 @@ namespace DiaryScraperCore
         public void AddTask(ScrapeTaskDescriptor newTask, string login = null, string password = null)
         {
             _tasks.Add(newTask);
+            newTask.Logger = _logger;
+            
             if (!Directory.Exists(newTask.WorkingDir))
             {
                 try

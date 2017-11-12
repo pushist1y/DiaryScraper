@@ -1,9 +1,10 @@
 {
-  "name": "cross-platform-desktop",
-  "version": "1.0.0",
-  "description": "cross-platform-desktop",
-  "author": "",
-  "repository": "",
+  "name": "diary-scraper",
+  "version": "0.1.0",
+  "title": "Скачать дневник",
+  "description": "Scraper for diary.ru blogs",
+  "author": "Anton Evseev",
+  "repository": "https://github.com/pushist1y/DiaryScraper",
   "main": "main.js",
   "devDependencies": {
     "electron": "^1.7.9",
@@ -21,7 +22,7 @@
     "dist": "build"
   },
   "build": {
-    "appId": "cross-platform-desktop",
+    "appId": "diary-scraper",
     "directories": {
       "buildResources": "../../assets",
       "output": "../../dist"
@@ -34,10 +35,10 @@
       ]
     },
     "mac": {
-      "category": "cross-platform-desktop"
+      "category": "diary-scraper"
     },
     "linux": {
-      "category": "cross-platform-desktop",
+      "category": "diary-scraper",
       "target": [
         "dir"
       ]
