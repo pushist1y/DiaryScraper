@@ -23,6 +23,7 @@ namespace DiaryScraperCore
         private string _diaryBaseUrl;
         private string _diaryName;
         private ScrapeContext _context;
+        private readonly CookieContainer _cookieContainer;
         public DiaryScraper(ScrapeTaskDescriptor descriptor) : this(descriptor, null, null)
         {
 
@@ -33,7 +34,8 @@ namespace DiaryScraperCore
             _login = login;
             _pass = pass;
             _descriptor = descriptor;
-            _webClient = new CF_WebClient();
+            _cookieContainer = new CookieContainer();
+            _webClient = new CF_WebClient(_cookieContainer);
         }
 
         public Task Run()
@@ -301,60 +303,92 @@ namespace DiaryScraperCore
             var html = enc1251.GetString(bytes);
 
             var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))");
-            foreach (Match m in matches)
-            {
-                var imageUrl = m.Groups[1].Value;
-                DownloadImage(imageUrl);
-            }
+            var imageUrls = matches.Select(m => m.Groups[1].Value).ToList();
+            DownloadImagesAsync(imageUrls).Wait();
         }
 
-        private void DownloadImage(string imageUrl)
+        private async Task<List<string>> CheckImageUrls(IEnumerable<string> imageUrls)
         {
-            if (_imagesProcessed.TryGetValue(imageUrl, out var imageProcessed))
+            var downloadingImages = new List<string>();
+            foreach (var imageUrl in imageUrls)
             {
-                if (File.Exists(imageProcessed.LocalPath))
+                if (_imagesProcessed.TryGetValue(imageUrl, out var imageProcessed))
                 {
-                    if (_descriptor.Overwrite && !imageProcessed.JustCreated)
+                    if (File.Exists(imageProcessed.LocalPath))
                     {
-                        Console.WriteLine("Overwriting processed image: " + imageUrl);
-                        File.Delete(imageProcessed.LocalPath);
-                        _context.Images.Remove(imageProcessed);
-                        _context.SaveChanges();
-                        _imagesProcessed.Remove(imageUrl);
+                        if (_descriptor.Overwrite && !imageProcessed.JustCreated)
+                        {
+                            Console.WriteLine("Overwriting processed image: " + imageUrl);
+                            File.Delete(imageProcessed.LocalPath);
+                            _context.Images.Remove(imageProcessed);
+                            _imagesProcessed.Remove(imageUrl);
+                            downloadingImages.Add(imageUrl);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Skipping processed image: " + imageUrl);
+                            continue;
+                        }
                     }
-                    else
-                    {
-                        Console.WriteLine("Skipping processed image: " + imageUrl);
-                        return;
-                    }
+                }
+                else
+                {
+                    downloadingImages.Add(imageUrl);
                 }
             }
 
+            await _context.SaveChangesAsync();
+
+            return downloadingImages;
+        }
+
+        private async Task DownloadImagesAsync(IEnumerable<string> imageUrls)
+        {
+            var imagesToDownload = await CheckImageUrls(imageUrls.Distinct());
+            var tasks = imagesToDownload.Select(url => DownloadImageAsync(url));
+            var imgs = new List<DiaryImage>();
+            foreach (var task in tasks)
+            {
+                var img = await task;
+                if(img != null)
+                {
+                    imgs.Add(img);
+                }
+            }
+            await _context.Images.AddRangeAsync(imgs);
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<DiaryImage> DownloadImageAsync(string imageUrl)
+        {
             var fNameMatch = Regex.Match(imageUrl, @"([^\/]*)$");
             if (!fNameMatch.Success)
             {
                 Console.WriteLine($"Url skipped: {imageUrl}");
-                return;
+                return null;
             }
 
             var imgFileName = Guid.NewGuid().ToString("n") + "-" + fNameMatch.Groups[1].Value;
             imgFileName = Path.Combine(_descriptor.WorkingDir, _diaryName, "images", imgFileName);
 
             Console.WriteLine("Downloading image: " + imageUrl);
-            var data = _webClient.DownloadData(imageUrl);
+            var uri = new Uri(imageUrl);
+            var client = new CF_WebClient(_cookieContainer);
+            var data = await client.DownloadDataTaskAsync(uri);
             _descriptor.Progress.ImageDownloaded(data);
             using (var f = File.Create(imgFileName))
             {
-                f.Write(data, 0, data.Length);
+                await f.WriteAsync(data, 0, data.Length);
             }
 
             var image = new DiaryImage();
             image.Url = imageUrl;
             image.JustCreated = true;
             image.LocalPath = imgFileName;
-            _context.Images.Add(image);
-            _context.SaveChanges();
+            //_context.Images.Add(image);
+            //await _context.SaveChangesAsync();
             _imagesProcessed[image.Url] = image;
+            return image;
         }
 
         private bool Login()
@@ -395,7 +429,7 @@ namespace DiaryScraperCore
             return true;
         }
 
-        
+
     }
 
 
