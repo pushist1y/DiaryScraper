@@ -3,7 +3,11 @@
   "version": "0.1.1",
   "title": "Скачать дневник",
   "description": "Scraper for diary.ru blogs",
-  "author": "Anton Evseev",
+  "author": {
+    "name": "Anton Evseev",
+    "email": "mister.p.sh@gmail.com",
+    "url": "http://terribles.ru"
+  },
   "repository": "https://github.com/pushist1y/DiaryScraper",
   "main": "main.js",
   "devDependencies": {
@@ -41,7 +45,6 @@
       "category": "diary-scraper",
       "target": [
         "dir",
-        "deb",
         "tar.gz"
       ]
     },
