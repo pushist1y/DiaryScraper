@@ -42,12 +42,11 @@ app.controller('ScrapeCtrl', function ($scope, $timeout, $interval, ScrapeServic
     };
 
     $scope.btnStartClick = () => {
+        $scope.inputEnabled = false;
         $scope.currentTask = undefined;
         $scope.taskError = undefined;
-        $scope.inputEnabled = false;
-        $timeout(() => {
-            $scope.inputEnabled = true;
-        }, 300);
+        
+        
         if ($scope.mainForm.$invalid) {
             angular.forEach($scope.mainForm.$error, function (field) {
                 angular.forEach(field, function (errorField) {
@@ -56,11 +55,13 @@ app.controller('ScrapeCtrl', function ($scope, $timeout, $interval, ScrapeServic
             });
         }
         if (!$scope.mainForm.$valid) {
+            $scope.inputEnabled = true;
             return;
         }
 
         startScrape().then(() => {
             $scope.inProgress = "started";
+            $scope.inputEnabled = true;
             let progress = 0;
             $scope.progressRefresh = $interval(() => {
                 refreshProgress();
