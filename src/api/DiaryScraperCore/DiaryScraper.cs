@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -380,12 +381,11 @@ namespace DiaryScraperCore
             var url = match.Groups[1].Value;
             url = "http://www.diary.ru" + url;
 
-            var coll = new NameValueCollection();
-            coll["user_login"] = _login;
-            coll["user_pass"] = _pass;
-            coll["signature"] = signature;
+            var reqdata = HttpWebExtensions.GetDiaryLoginPostData(_login, _pass, signature);
+
             Thread.Sleep(_descriptor.RequestDelay);
-            var data = _webClient.UploadValues(url, "POST", coll);
+            _webClient.Headers["Content-Type"] = "application/x-www-form-urlencoded";
+            var data = _webClient.UploadData(url, "POST", reqdata);
             html = data.AsAnsiString();
             if (Regex.IsMatch(html, @"неверное имя пользователя. Или неверный пароль"))
             {
@@ -394,7 +394,11 @@ namespace DiaryScraperCore
 
             return true;
         }
+
+        
     }
+
+
 
     public class DateUrlInfo
     {
