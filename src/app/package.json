@@ -40,12 +40,15 @@
     "linux": {
       "category": "diary-scraper",
       "target": [
-        "dir"
+        "dir",
+        "deb",
+        "tar.gz"
       ]
     },
     "win": {
       "target": [
-        "nsis"
+        "nsis",
+        "zip"
       ]
     }
   }
