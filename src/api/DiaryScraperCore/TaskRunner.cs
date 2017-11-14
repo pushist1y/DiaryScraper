@@ -24,8 +24,8 @@ namespace DiaryScraperCore
         //     }
         // }
 
-        private ILogger<TaskRunner> _logger;
-        public TaskRunner(ILogger<TaskRunner> logger)
+        private ILogger<DiaryScraper> _logger;
+        public TaskRunner(ILogger<DiaryScraper> logger)
         {
             _logger = logger;
         }
@@ -37,7 +37,6 @@ namespace DiaryScraperCore
         public void AddTask(ScrapeTaskDescriptor newTask, string login = null, string password = null)
         {
             _tasks.Add(newTask);
-            newTask.Logger = _logger;
             
             if (!Directory.Exists(newTask.WorkingDir))
             {
@@ -52,7 +51,7 @@ namespace DiaryScraperCore
                 }
             }
 
-            var worker = new DiaryScraper(newTask, login, password);
+            var worker = new DiaryScraper(newTask, login, password, _logger);
             worker.Run();
         }
 

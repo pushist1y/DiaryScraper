@@ -10,6 +10,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NLog;
+using NLog.Extensions.Logging;
+using NLog.Web;
 
 namespace DiaryScraperCore
 {
@@ -30,7 +33,6 @@ namespace DiaryScraperCore
             services.AddDbContext<ScrapeContext>((options) => {
                 options.UseSqlite("Data Source=scrape.db");
             });
-            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -47,6 +49,9 @@ namespace DiaryScraperCore
 
             loggerFactory.AddConsole();
             loggerFactory.AddDebug();
+            loggerFactory.AddNLog();
+
+            app.AddNLogWeb();
         }
     }
 }

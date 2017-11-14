@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 using Cloudflare_Bypass;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 namespace DiaryScraperCore
 {
@@ -24,13 +27,15 @@ namespace DiaryScraperCore
         private string _diaryName;
         private ScrapeContext _context;
         private readonly CookieContainer _cookieContainer;
-        public DiaryScraper(ScrapeTaskDescriptor descriptor) : this(descriptor, null, null)
+        public DiaryScraper(ScrapeTaskDescriptor descriptor, ILogger<DiaryScraper> logger) : this(descriptor, null, null, logger)
         {
 
         }
 
-        public DiaryScraper(ScrapeTaskDescriptor descriptor, string login, string pass)
+        private readonly ILogger<DiaryScraper> _logger;
+        public DiaryScraper(ScrapeTaskDescriptor descriptor, string login, string pass, ILogger<DiaryScraper> logger)
         {
+            _logger = logger;
             _login = login;
             _pass = pass;
             _descriptor = descriptor;
@@ -59,8 +64,6 @@ namespace DiaryScraperCore
             _diaryBaseUrl = $"http://{match.Groups[1].Value}.diary.ru";
             _diaryName = match.Groups[1].Value;
             return true;
-
-
         }
 
         private List<DateUrlInfo> _dateUrls = new List<DateUrlInfo>();
@@ -124,6 +127,7 @@ namespace DiaryScraperCore
             _context.Database.Migrate();
         }
 
+
         private void DoWork(CancellationToken cancellationToken)
         {
             try
@@ -136,8 +140,6 @@ namespace DiaryScraperCore
                     return;
                 }
 
-
-
                 if (!CheckDiaryUrl())
                 {
                     SetError("Diary url is wrong", cancellationToken);
@@ -145,6 +147,7 @@ namespace DiaryScraperCore
                 }
 
                 EnsureDirs();
+                ConfigureLog();
                 CreateContext();
 
                 if (!string.IsNullOrEmpty(_login) && !string.IsNullOrEmpty(_pass))
@@ -175,9 +178,13 @@ namespace DiaryScraperCore
             }
             catch (Exception e)
             {
-                _descriptor.Logger.LogError(e, "Error");
                 SetError(e.Message, cancellationToken);
+                _logger.LogError(e, "Error");
                 throw;
+            }
+            finally
+            {
+                UnsetLog();
             }
 
         }
@@ -217,13 +224,44 @@ namespace DiaryScraperCore
                         Url = "http://" + m.Groups[1].Value,
                         PostDate = urlInfo.PostDate
                     };
-                    DownloadPost(postInfo);
 
+                    DownloadPost(postInfo);
                 }
 
                 _descriptor.Progress.DatePagesProcessed += 1;
+
             }
             return true;
+        }
+
+        private FileTarget _errorLogTarget;
+        private LoggingRule _errorLogRule;
+
+        private void ConfigureLog()
+        {
+            _errorLogTarget = new FileTarget();
+            _errorLogTarget.Name = "errorTarget_" + Guid.NewGuid().ToString("n");
+            _errorLogTarget.FileName = Path.Combine(_descriptor.WorkingDir, "${shortdate}.log");
+            _errorLogTarget.Layout = @"${date:format=dd.MM.yyyy HH\:mm\:ss} (${level:uppercase=true}): ${message}. ${exception:format=ToString}";
+            NLog.LogManager.Configuration.AddTarget(_errorLogTarget);
+
+            _errorLogRule = new LoggingRule("DiaryScraperCore*", NLog.LogLevel.Warn, _errorLogTarget);
+            NLog.LogManager.Configuration.LoggingRules.Add(_errorLogRule);
+
+            NLog.LogManager.ReconfigExistingLoggers();
+        }
+
+        private void UnsetLog()
+        {
+            if (_errorLogTarget != null)
+            {
+                NLog.LogManager.Configuration.RemoveTarget(_errorLogTarget.Name);
+            }
+            if (_errorLogRule != null)
+            {
+                NLog.LogManager.Configuration.LoggingRules.Remove(_errorLogRule);
+            }
+            NLog.LogManager.ReconfigExistingLoggers();
         }
 
         private void EnsureDirs()
@@ -259,7 +297,7 @@ namespace DiaryScraperCore
                 {
                     if (_descriptor.Overwrite)
                     {
-                        Console.WriteLine("Overwriting processed post: " + urlInfo.Url);
+                        _logger.LogInformation("Overwriting processed post: " + urlInfo.Url);
                         File.Delete(processedPost.LocalPath);
                         _context.Posts.Remove(processedPost);
                         _context.SaveChanges();
@@ -267,7 +305,7 @@ namespace DiaryScraperCore
                     }
                     else
                     {
-                        Console.WriteLine("Skipping processed post: " + urlInfo.Url);
+                        _logger.LogInformation("Skipping processed post: " + urlInfo.Url);
                         return;
                     }
                 }
@@ -282,7 +320,7 @@ namespace DiaryScraperCore
             fileName = Path.Combine(_descriptor.WorkingDir, _diaryName, "posts", fileName);
 
             Thread.Sleep(_descriptor.RequestDelay);
-            Console.WriteLine("Downloading post: " + urlInfo.Url);
+            _logger.LogInformation("Downloading post: " + urlInfo.Url);
             var bytes = _webClient.DownloadData(urlInfo.Url);
 
             _descriptor.Progress.PageDownloaded(bytes);
@@ -318,7 +356,7 @@ namespace DiaryScraperCore
                     {
                         if (_descriptor.Overwrite && !imageProcessed.JustCreated)
                         {
-                            Console.WriteLine("Overwriting processed image: " + imageUrl);
+                            _logger.LogInformation("Overwriting processed image: " + imageUrl);
                             File.Delete(imageProcessed.LocalPath);
                             _context.Images.Remove(imageProcessed);
                             _imagesProcessed.Remove(imageUrl);
@@ -326,7 +364,7 @@ namespace DiaryScraperCore
                         }
                         else
                         {
-                            Console.WriteLine("Skipping processed image: " + imageUrl);
+                            _logger.LogInformation("Skipping processed image: " + imageUrl);
                             continue;
                         }
                     }
@@ -350,7 +388,7 @@ namespace DiaryScraperCore
             foreach (var task in tasks)
             {
                 var img = await task;
-                if(img != null)
+                if (img != null)
                 {
                     imgs.Add(img);
                 }
@@ -364,21 +402,40 @@ namespace DiaryScraperCore
             var fNameMatch = Regex.Match(imageUrl, @"([^\/]*)$");
             if (!fNameMatch.Success)
             {
-                Console.WriteLine($"Url skipped: {imageUrl}");
+                _logger.LogInformation($"Url skipped: {imageUrl}");
                 return null;
             }
 
             var imgFileName = Guid.NewGuid().ToString("n") + "-" + fNameMatch.Groups[1].Value;
             imgFileName = Path.Combine(_descriptor.WorkingDir, _diaryName, "images", imgFileName);
 
-            Console.WriteLine("Downloading image: " + imageUrl);
+            _logger.LogInformation("Downloading image: " + imageUrl);
             var uri = new Uri(imageUrl);
             var client = new CF_WebClient(_cookieContainer);
-            var data = await client.DownloadDataTaskAsync(uri);
-            _descriptor.Progress.ImageDownloaded(data);
-            using (var f = File.Create(imgFileName))
+            try
             {
-                await f.WriteAsync(data, 0, data.Length);
+                var data = await client.DownloadDataTaskAsync(uri);
+
+                _descriptor.Progress.ImageDownloaded(data);
+                using (var f = File.Create(imgFileName))
+                {
+                    await f.WriteAsync(data, 0, data.Length);
+                }
+            }
+            catch (WebException e)
+            {
+                if (e.Status == WebExceptionStatus.ProtocolError)
+                {
+                    var response = e.Response as HttpWebResponse;
+                    if (response != null)
+                    {
+                        if (response.StatusCode == HttpStatusCode.NotFound)
+                        {
+                            _logger.LogWarning("Url not found: " + e.Response.ResponseUri.AbsoluteUri);
+                            imgFileName = "";
+                        }
+                    }
+                }
             }
 
             var image = new DiaryImage();
@@ -428,11 +485,7 @@ namespace DiaryScraperCore
 
             return true;
         }
-
-
     }
-
-
 
     public class DateUrlInfo
     {
