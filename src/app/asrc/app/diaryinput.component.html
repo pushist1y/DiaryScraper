@@ -1,0 +1,34 @@
+<form class="formWrapper">
+  <table class="fullWidth" cellspacing="0">
+    <tr>
+      <td>
+        <mat-form-field class="fullWidth">
+          <input matInput placeholder="Login" required [errorStateMatcher]="instantErrorStateMatcher">
+        </mat-form-field>
+      </td>
+      <td>
+        <mat-form-field class="fullWidth">
+          <input matInput placeholder="Password" type="password" required>
+        </mat-form-field>
+      </td>
+    </tr>
+  </table>
+  <mat-form-field>
+    <span matPrefix>http://</span>
+    <input matInput placeholder="Адрес дневника" [formControl]="diaryNameFormControl" [errorStateMatcher]="instantErrorStateMatcher">
+    <span matSuffix>.diary.ru</span>
+    <mat-hint>http://
+      <strong>адрес_дневника</strong>.diary.ru</mat-hint>
+    <mat-error *ngIf="diaryNameFormControl.hasError('pattern') && !diaryNameFormControl.hasError('required')">
+      Введённый адрес содержит некорректные символы
+    </mat-error>
+    <mat-error *ngIf="diaryNameFormControl.hasError('required')">
+      Необходимо заполнить адрес дневника
+    </mat-error>
+  </mat-form-field>
+  <button mat-button color="primary" (click)="onClickOk()">Ok</button>
+
+</form>
+<code>diaryNameFormControl.hasError('pattern'): {{diaryNameFormControl.hasError('pattern')}}</code>
+<br/>
+<code>diaryNameFormControl.hasError('minLength'): {{diaryNameFormControl.hasError('minlength')}}</code>

@@ -1,22 +1,40 @@
 import { BrowserModule } from '@angular/platform-browser';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from "@angular/flex-layout";
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 
 import { AppComponent } from './app.component';
-import { DiaryComponent } from './diary.component';
+import { DiaryInputComponent } from './diaryinput.component';
+
+import {
+  MatFormFieldModule,
+  MatOptionModule,
+  MatInputModule,
+  MatSelectModule,
+  MatButtonModule
+
+} from '@angular/material';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    DiaryComponent
+    DiaryInputComponent,
+
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     FlexLayoutModule,
-    FormsModule
+    FormsModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatOptionModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]

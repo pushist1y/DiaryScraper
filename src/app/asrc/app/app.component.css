@@ -1,0 +1,19 @@
+  
+  .sec1 {
+    background: blue;
+    color: white;
+    text-transform: uppercase
+  }
+  
+
+  
+  .sec1{
+    padding-top: 20px;
+    text-align: center
+  }
+  
+  .content {
+    min-width: 300px;
+    /*height: 400px;*/
+  }
+  
