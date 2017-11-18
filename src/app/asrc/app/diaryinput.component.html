@@ -1,21 +1,30 @@
-<form class="formWrapper">
+<form class="formWrapper" #diaryInputForm="ngForm">
   <table class="fullWidth" cellspacing="0">
     <tr>
       <td>
         <mat-form-field class="fullWidth">
-          <input matInput placeholder="Login" required [errorStateMatcher]="instantErrorStateMatcher">
+          <input id="diaryLoginInput" name="diaryLoginInput" [(ngModel)]="inputData.diaryLogin" #diaryLogin="ngModel" matInput placeholder="Имя пользователя"
+            required [errorStateMatcher]="instantErrorStateMatcher">
+          <mat-error *ngIf="diaryLogin.hasError('required') && (diaryLogin.dirty || diaryLogin.touched || diaryInputForm.submitted)">
+            Необходимо заполнить имя пользователя
+          </mat-error>
         </mat-form-field>
       </td>
       <td>
         <mat-form-field class="fullWidth">
-          <input matInput placeholder="Password" type="password" required>
+          <input id="diaryPasswordInput" name="diaryPasswordInput" [(ngModel)]="inputData.diaryPassword" #diaryPasswordControl="ngModel"
+            matInput placeholder="Password" type="password" required [errorStateMatcher]="instantErrorStateMatcher">
+          <mat-error *ngIf="diaryPasswordControl.hasError('required') && (diaryPasswordControl.dirty || diaryPasswordControl.touched || diaryInputForm.submitted)">
+            Необходимо заполнить пароль
+          </mat-error>
         </mat-form-field>
       </td>
     </tr>
   </table>
   <mat-form-field>
     <span matPrefix>http://</span>
-    <input matInput placeholder="Адрес дневника" [formControl]="diaryNameFormControl" [errorStateMatcher]="instantErrorStateMatcher">
+    <input matInput [(ngModel)]="inputData.diaryAddress" #diaryNameFormControl="ngModel" name="diaryNameInput" id="diaryNameInput"
+      placeholder="Адрес дневника" [errorStateMatcher]="instantErrorStateMatcher" required pattern="^[\w-]+$">
     <span matSuffix>.diary.ru</span>
     <mat-hint>http://
       <strong>адрес_дневника</strong>.diary.ru</mat-hint>
@@ -26,7 +35,7 @@
       Необходимо заполнить адрес дневника
     </mat-error>
   </mat-form-field>
-  <button mat-button color="primary" (click)="onClickOk()">Ok</button>
+  <button mat-button color="primary" (click)="onClickOk(diaryNameFormControl)">Ok</button>
 
 </form>
 <code>diaryNameFormControl.hasError('pattern'): {{diaryNameFormControl.hasError('pattern')}}</code>
