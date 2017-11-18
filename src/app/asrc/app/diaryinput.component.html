@@ -36,12 +36,17 @@
     </mat-error>
   </mat-form-field>
   <mat-form-field>
-    <input matInput placeholder="Рабочая папка">
-    <button mat-button matSuffix mat-icon-button >
-      <mat-icon>close</mat-icon>
+    <input matInput placeholder="Рабочая папка" readonly [(ngModel)]="inputData.workingDir" #workingDirFormControl="ngModel"
+      name="workingDirInput" id="workingDirInput" required>
+    <button mat-button matSuffix mat-icon-button type="button" (click)="onWorkingDirectoryButtonClick(workingDirFormControl)">
+      <mat-icon>folder_open</mat-icon>
     </button>
+    <mat-error *ngIf="workingDirFormControl.hasError('required')">
+      Необходимо указать рабочую папку
+    </mat-error>
   </mat-form-field>
 
   <button mat-button color="primary" (click)="onClickOk(diaryNameFormControl)">Ok</button>
 
 </form>
+<code>workingdir: {{inputData.workingDir}}</code>

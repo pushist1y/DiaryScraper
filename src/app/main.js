@@ -14,6 +14,7 @@ function createWindow() {
         height: 600,
         icon: path.join(__dirname, '../../assets/icons/png/64x64.png')
     });
+    mainWindow.webContents.openDevTools();
     mainWindow.loadURL(url.format({
         pathname: path.join(__dirname, 'adist/index.html'),
         protocol: 'file:',

@@ -1,11 +1,18 @@
-import { Component, OnInit,ViewChild } from '@angular/core';
-import {FormControl, FormGroupDirective, NgForm, Validators} from '@angular/forms';
-import {ErrorStateMatcher} from '@angular/material/core';
+/// <reference path="../../node_modules/electron/electron.d.ts"/>
+//c:\work\DiaryScraper\src\app\node_modules\@types\node\index.d.ts 
 
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { FormControl, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
+
+declare var electron: Electron.AllElectron;
+
+const currentWindow = electron.remote.getCurrentWindow();
+const dialog = electron.remote.dialog;
 
 @Component({
   selector: 'diary-input',
-  styleUrls : [
+  styleUrls: [
     'diaryinput.component.css'
   ],
   templateUrl: './diaryinput.component.html'
@@ -17,23 +24,31 @@ export class DiaryInputComponent implements OnInit {
   @ViewChild('#diaryNameInput')
   diaryNameInput: any;
 
-  ngOnInit() {  }
+  ngOnInit() { }
 
   inputData = new DiaryScraperInputData();
 
- 
+
 
   instantErrorStateMatcher = new MyErrorStateMatcher();
 
-  onClickOk(diaryNameInput: FormControl){
-    
+  onClickOk(diaryNameInput: FormControl) {
+
     alert(JSON.stringify(diaryNameInput.errors));
   }
-  onWorkingDirectoryButtonClick(){
-    alert(1);
+
+  onWorkingDirectoryButtonClick(workingDirFormControl: FormControl) {
+    let paths = dialog.showOpenDialog(currentWindow, {
+      properties: ['openDirectory']
+    });
+    
+    if(paths && paths.length > 0)
+    {
+      this.inputData.workingDir = paths[0];
+    }
   }
 }
-      
+
 export class MyErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const isSubmitted = form && form.submitted;
@@ -42,8 +57,9 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
   }
 }
 
-export class DiaryScraperInputData{
+export class DiaryScraperInputData {
   public diaryLogin: string = "";
   public diaryPass: string = "";
   public diaryAddress: string = "";
+  public workingDir: string = "";
 }

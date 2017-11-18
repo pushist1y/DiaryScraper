@@ -7,7 +7,7 @@
     {
       "root": "asrc",
       "outDir": "adist",
-      "assets": ["angular_assets"],
+      "assets": ["angular_assets", "./native.js"],
       "index": "index.html",
       "main": "angular_main.ts",
       "polyfills": "polyfills.ts",
@@ -18,7 +18,7 @@
       "styles": [
         "styles.css"
       ],
-      "scripts": [],
+      "scripts": [ "./native.js" ],
       "environmentSource": "environments/environment.ts",
       "environments": {
         "dev": "environments/environment.ts",
