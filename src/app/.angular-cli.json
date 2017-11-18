@@ -7,10 +7,7 @@
     {
       "root": "asrc",
       "outDir": "adist",
-      "assets": [
-        "../../assets",
-        "../../assets/favicon.ico"
-      ],
+      "assets": ["angular_assets"],
       "index": "index.html",
       "main": "angular_main.ts",
       "polyfills": "polyfills.ts",

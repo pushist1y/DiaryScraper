@@ -35,9 +35,13 @@
       Необходимо заполнить адрес дневника
     </mat-error>
   </mat-form-field>
+  <mat-form-field>
+    <input matInput placeholder="Рабочая папка">
+    <button mat-button matSuffix mat-icon-button >
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-form-field>
+
   <button mat-button color="primary" (click)="onClickOk(diaryNameFormControl)">Ok</button>
 
 </form>
-<code>diaryNameFormControl.hasError('pattern'): {{diaryNameFormControl.hasError('pattern')}}</code>
-<br/>
-<code>diaryNameFormControl.hasError('minLength'): {{diaryNameFormControl.hasError('minlength')}}</code>

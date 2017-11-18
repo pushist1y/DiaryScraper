@@ -13,7 +13,8 @@ import {
   MatOptionModule,
   MatInputModule,
   MatSelectModule,
-  MatButtonModule
+  MatButtonModule,
+  MatIconModule
 
 } from '@angular/material';
 
@@ -34,7 +35,8 @@ import {
     MatOptionModule,
     MatInputModule,
     MatSelectModule,
-    MatButtonModule
+    MatButtonModule,
+    MatIconModule
   ],
   providers: [],
   bootstrap: [AppComponent]

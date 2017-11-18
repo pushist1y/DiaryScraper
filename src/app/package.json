@@ -52,7 +52,7 @@
     "zone.js": "^0.8.14"
   },
   "scripts": {
-    "start": "tsc main.ts  electron .",
+    "start": "tsc main.ts && electron .",
     "dist": "tsc main.ts && ng build --prod && build"
   },
   "build": {

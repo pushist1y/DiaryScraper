@@ -29,6 +29,9 @@ export class DiaryInputComponent implements OnInit {
     
     alert(JSON.stringify(diaryNameInput.errors));
   }
+  onWorkingDirectoryButtonClick(){
+    alert(1);
+  }
 }
       
 export class MyErrorStateMatcher implements ErrorStateMatcher {
