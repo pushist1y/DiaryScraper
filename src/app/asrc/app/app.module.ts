@@ -20,6 +20,8 @@ import {
   MatDatepickerModule
 
 } from '@angular/material';
+import { AppRoutingModule } from './app-routing.module';
+import { DiaryProgressComponent } from './diary-progress.component';
 
 
 
@@ -27,7 +29,8 @@ import {
   declarations: [
     AppComponent,
     DiaryInputComponent,
-    MomentValidateExactDirective
+    MomentValidateExactDirective,
+    DiaryProgressComponent
   ],
   imports: [
     BrowserModule,
@@ -43,7 +46,8 @@ import {
     MatIconModule,
     MatCheckboxModule,
     MatDatepickerModule,
-    MatMomentDateModule
+    MatMomentDateModule,
+    AppRoutingModule
   ],
   providers: [],
   bootstrap: [AppComponent]

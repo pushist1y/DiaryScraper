@@ -1,11 +1,14 @@
 /// <reference path="../../node_modules/electron/electron.d.ts"/>
 //c:\work\DiaryScraper\src\app\node_modules\@types\node\index.d.ts 
 
-import { Component, OnInit, ViewChild, Directive, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, Directive, Input, HostBinding } from '@angular/core';
 import { FormControl, FormGroupDirective, NgForm, Validators, ValidatorFn, Validator, AbstractControl, NgModel, NG_VALIDATORS } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { Location } from '@angular/common';
 import * as moment from 'moment';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
+import { Router } from '@angular/router';
+import { slideInDownAnimation } from './animations';
 
 declare var electron: Electron.AllElectron;
 
@@ -32,16 +35,18 @@ export const RU_FORMATS = {
   templateUrl: './diaryinput.component.html',
   providers: [
     { provide: MAT_DATE_FORMATS, useValue: RU_FORMATS }
-  ]
+  ],
+  animations: [slideInDownAnimation]
 })
 export class DiaryInputComponent implements OnInit {
 
-  constructor(private adapter: DateAdapter<any>) {
+  constructor(private adapter: DateAdapter<any>, private location: Location, private router: Router) {
     this.adapter.setLocale("ru");
   }
 
-  @ViewChild('#diaryNameInput')
-  diaryNameInput: any;
+  @HostBinding('@routeAnimation') routeAnimation = true;
+  @HostBinding('style.display')   display = 'block';
+  @HostBinding('style.position')  position = 'absolute';
 
   ngOnInit() { }
 
@@ -51,11 +56,6 @@ export class DiaryInputComponent implements OnInit {
 
   instantErrorStateMatcher = new MyErrorStateMatcher();
 
-  onClickOk(input: NgModel) {
-    alert(JSON.stringify(input.errors));
-    //alert(input.value);
-  }
-
   onWorkingDirectoryButtonClick(workingDirFormControl: FormControl) {
     let paths = dialog.showOpenDialog(currentWindow, {
       properties: ['openDirectory']
@@ -64,6 +64,11 @@ export class DiaryInputComponent implements OnInit {
     if (paths && paths.length > 0) {
       this.inputData.workingDir = paths[0];
     }
+  }
+
+  onSubmit() {
+    alert("Submitting");
+    this.router.navigateByUrl("/progress");
   }
 }
 
@@ -82,6 +87,7 @@ export class DiaryScraperInputData {
   public workingDir: string = "";
   public dateStart: DateCheck;
   public dateEnd: DateCheck;
+  public overwrite: boolean = false;
 
   constructor() {
     this.dateStart = new DateCheck();

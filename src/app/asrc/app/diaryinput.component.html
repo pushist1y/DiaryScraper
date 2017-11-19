@@ -1,4 +1,4 @@
-<form class="formWrapper" #diaryInputForm="ngForm">
+<form class="formWrapper" #diaryInputForm="ngForm" (ngSubmit)="onSubmit()">
   <table class="fullWidth" cellspacing="0">
     <tr>
       <td>
@@ -24,7 +24,7 @@
   <mat-form-field>
     <span matPrefix>http://</span>
     <input matInput [(ngModel)]="inputData.diaryAddress" #diaryNameFormControl="ngModel" name="diaryNameInput" id="diaryNameInput"
-    placeholder="Адрес дневника" type="text" [errorStateMatcher]="instantErrorStateMatcher" required pattern="^[\w-]+$">
+      placeholder="Адрес дневника" type="text" [errorStateMatcher]="instantErrorStateMatcher" required pattern="^[\w-]+$">
     <span matSuffix>.diary.ru</span>
     <mat-hint>http://
       <strong>адрес_дневника</strong>.diary.ru</mat-hint>
@@ -49,24 +49,39 @@
     <tr>
       <td>
         <mat-checkbox [(ngModel)]="inputData.dateStart.enabled" name="dateStartCheck" id="dateStartCheck"></mat-checkbox>
-        <mat-form-field>
-          <input #diaryStartDateFormControl="ngModel" matInput [matDatepicker]="dtpStart" placeholder="С даты" [(ngModel)]="inputData.dateStart.value"
-            name="dateStartValue" id="dateStartValue" momentValidateExact>
+        </td>
+        <td>
+        <mat-form-field class="fullWidth">
+          <input #diaryStartDateValueModel="ngModel" matInput [matDatepicker]="dtpStart" placeholder="С даты" [(ngModel)]="inputData.dateStart.value"
+            name="dateStartValue" id="dateStartValue" momentValidateExact [disabled]="!inputData.dateStart.enabled">
           <mat-datepicker-toggle matSuffix [for]="dtpStart"></mat-datepicker-toggle>
           <mat-datepicker #dtpStart></mat-datepicker>
-          
-          <mat-error *ngIf="diaryStartDateFormControl.hasError('matDatepickerParse') || diaryStartDateFormControl.hasError('momentValidateExact')">
+
+          <mat-error *ngIf="diaryStartDateValueModel.hasError('matDatepickerParse') || diaryStartDateValueModel.hasError('momentValidateExact')">
             Необходимо ввести корректную дату
           </mat-error>
         </mat-form-field>
       </td>
+      <td style="width:10px;"></td>
       <td>
-
+        <mat-checkbox [(ngModel)]="inputData.dateEnd.enabled" name="dateEndCheck" id="dateEndCheck"></mat-checkbox>
+      </td>
+      <td>
+        <mat-form-field class="fullWidth">
+          <input #diaryEndDateValueModel="ngModel" matInput [matDatepicker]="dtpEnd" placeholder="По дату" [(ngModel)]="inputData.dateEnd.value"
+            name="dateEndValue" id="dateEndValue" momentValidateExact [disabled]="!inputData.dateEnd.enabled">
+          <mat-datepicker-toggle matSuffix [for]="dtpEnd"></mat-datepicker-toggle>
+          <mat-datepicker #dtpEnd></mat-datepicker>
+          <mat-error *ngIf="diaryEndDateValueModel.hasError('matDatepickerParse') || diaryEndDateValueModel.hasError('momentValidateExact')">
+            Необходимо ввести корректную дату
+          </mat-error>
+        </mat-form-field>
       </td>
     </tr>
   </table>
+  <mat-checkbox [(ngModel)]="inputData.overwrite" name="overwriteCheck" id="overwriteCheck">Перезаписывать данные</mat-checkbox>
 
-  <button mat-button color="primary" (click)="onClickOk(diaryNameFormControl)">Ok</button>
+  <button mat-button color="primary" [disabled]="!diaryInputForm.form.valid">Пуск</button>
 
 </form>
-<code>startdate: {{inputData.dateStart.value}}</code>
+<!-- <code>startdate: {{inputData.dateStart.value}}</code> -->
