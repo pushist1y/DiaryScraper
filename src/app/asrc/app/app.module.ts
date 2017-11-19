@@ -22,6 +22,9 @@ import {
 } from '@angular/material';
 import { AppRoutingModule } from './app-routing.module';
 import { DiaryProgressComponent } from './diary-progress.component';
+import { DataService } from '../services/data.service';
+import { ScrapeTaskService } from '../services/scrape-task-service';
+import { HttpClientModule } from '@angular/common/http';
 
 
 
@@ -47,9 +50,10 @@ import { DiaryProgressComponent } from './diary-progress.component';
     MatCheckboxModule,
     MatDatepickerModule,
     MatMomentDateModule,
-    AppRoutingModule
+    AppRoutingModule,
+    HttpClientModule
   ],
-  providers: [],
+  providers: [DataService, ScrapeTaskService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

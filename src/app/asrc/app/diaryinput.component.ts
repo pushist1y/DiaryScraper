@@ -5,10 +5,11 @@ import { Component, OnInit, ViewChild, Directive, Input, HostBinding } from '@an
 import { FormControl, FormGroupDirective, NgForm, Validators, ValidatorFn, Validator, AbstractControl, NgModel, NG_VALIDATORS } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { Location } from '@angular/common';
-import * as moment from 'moment';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { Router } from '@angular/router';
 import { slideInDownAnimation } from './animations';
+import { DiaryScraperInputData } from '../common/diary-scraper-input-data';
+import { DataService } from '../services/data.service';
 
 declare var electron: Electron.AllElectron;
 
@@ -40,19 +41,20 @@ export const RU_FORMATS = {
 })
 export class DiaryInputComponent implements OnInit {
 
-  constructor(private adapter: DateAdapter<any>, private location: Location, private router: Router) {
+  constructor(private adapter: DateAdapter<any>, private location: Location,
+    private router: Router, private dataService: DataService) {
     this.adapter.setLocale("ru");
   }
 
   @HostBinding('@routeAnimation') routeAnimation = true;
-  @HostBinding('style.display')   display = 'block';
-  @HostBinding('style.position')  position = 'absolute';
+  @HostBinding('style.display') display = 'block';
+  // @HostBinding('style.position') position = 'absolute';
 
-  ngOnInit() { }
+  ngOnInit() {
+    this.dataService.currentData.subscribe(inputaData => this.inputData = inputaData);
+  }
 
-  inputData = new DiaryScraperInputData();
-
-
+  inputData: DiaryScraperInputData;
 
   instantErrorStateMatcher = new MyErrorStateMatcher();
 
@@ -67,7 +69,7 @@ export class DiaryInputComponent implements OnInit {
   }
 
   onSubmit() {
-    alert("Submitting");
+    this.dataService.changeData(this.inputData);
     this.router.navigateByUrl("/progress");
   }
 }
@@ -80,27 +82,7 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
   }
 }
 
-export class DiaryScraperInputData {
-  public diaryLogin: string = "";
-  public diaryPass: string = "";
-  public diaryAddress: string = "";
-  public workingDir: string = "";
-  public dateStart: DateCheck;
-  public dateEnd: DateCheck;
-  public overwrite: boolean = false;
 
-  constructor() {
-    this.dateStart = new DateCheck();
-    this.dateStart.value = moment([2000, 0, 1]);
-    this.dateEnd = new DateCheck();
-    this.dateEnd.value = moment([2025, 0, 1]);
-  }
-}
-
-export class DateCheck {
-  public value: moment.Moment = moment();
-  public enabled: boolean = false;
-}
 
 
 
