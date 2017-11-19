@@ -24,7 +24,7 @@
   <mat-form-field>
     <span matPrefix>http://</span>
     <input matInput [(ngModel)]="inputData.diaryAddress" #diaryNameFormControl="ngModel" name="diaryNameInput" id="diaryNameInput"
-      placeholder="Адрес дневника" [errorStateMatcher]="instantErrorStateMatcher" required pattern="^[\w-]+$">
+    placeholder="Адрес дневника" type="text" [errorStateMatcher]="instantErrorStateMatcher" required pattern="^[\w-]+$">
     <span matSuffix>.diary.ru</span>
     <mat-hint>http://
       <strong>адрес_дневника</strong>.diary.ru</mat-hint>
@@ -45,8 +45,28 @@
       Необходимо указать рабочую папку
     </mat-error>
   </mat-form-field>
+  <table class="fullWidth" cellspacing="0">
+    <tr>
+      <td>
+        <mat-checkbox [(ngModel)]="inputData.dateStart.enabled" name="dateStartCheck" id="dateStartCheck"></mat-checkbox>
+        <mat-form-field>
+          <input #diaryStartDateFormControl="ngModel" matInput [matDatepicker]="dtpStart" placeholder="С даты" [(ngModel)]="inputData.dateStart.value"
+            name="dateStartValue" id="dateStartValue" momentValidateExact>
+          <mat-datepicker-toggle matSuffix [for]="dtpStart"></mat-datepicker-toggle>
+          <mat-datepicker #dtpStart></mat-datepicker>
+          
+          <mat-error *ngIf="diaryStartDateFormControl.hasError('matDatepickerParse') || diaryStartDateFormControl.hasError('momentValidateExact')">
+            Необходимо ввести корректную дату
+          </mat-error>
+        </mat-form-field>
+      </td>
+      <td>
+
+      </td>
+    </tr>
+  </table>
 
   <button mat-button color="primary" (click)="onClickOk(diaryNameFormControl)">Ok</button>
 
 </form>
-<code>workingdir: {{inputData.workingDir}}</code>
+<code>startdate: {{inputData.dateStart.value}}</code>
