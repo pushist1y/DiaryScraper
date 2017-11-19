@@ -33,6 +33,7 @@ export class DiaryProgressComponent implements OnInit {
     newTask.diaryUrl = `http://${this.inputData.diaryAddress}.diary.ru`;
     newTask.workingDir = this.inputData.workingDir;
     newTask.overwrite = this.inputData.overwrite;
+    newTask.requestDelay = this.inputData.requestDelay;
     if (this.inputData.dateStart.enabled) {
       newTask.scrapeStart = this.inputData.dateStart.value;
     }

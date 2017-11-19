@@ -11,8 +11,8 @@ let apiProcess: ChildProcess = null;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 700,
+        height: 650,
         icon: path.join(__dirname, '../../assets/icons/png/64x64.png')
     });
     mainWindow.webContents.openDevTools();

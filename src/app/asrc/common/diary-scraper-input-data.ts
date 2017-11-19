@@ -8,6 +8,7 @@ export class DiaryScraperInputData {
     public dateStart: DateCheck;
     public dateEnd: DateCheck;
     public overwrite: boolean = false;
+    public requestDelay: number = 1000;
   
     constructor() {
       this.dateStart = new DateCheck();

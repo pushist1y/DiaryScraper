@@ -1,4 +1,4 @@
-<form class="formWrapper" #diaryInputForm="ngForm" (ngSubmit)="onSubmit()">
+<form class="formWrapper" #diaryInputForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
   <table class="fullWidth" cellspacing="0">
     <tr>
       <td>
@@ -26,8 +26,7 @@
     <input matInput [(ngModel)]="inputData.diaryAddress" #diaryNameFormControl="ngModel" name="diaryNameInput" id="diaryNameInput"
       placeholder="Адрес дневника" type="text" [errorStateMatcher]="instantErrorStateMatcher" required pattern="^[\w-]+$">
     <span matSuffix>.diary.ru</span>
-    <mat-hint>http://
-      <strong>адрес_дневника</strong>.diary.ru</mat-hint>
+    <mat-hint>http://<strong>адрес_дневника</strong>.diary.ru</mat-hint>
     <mat-error *ngIf="diaryNameFormControl.hasError('pattern') && !diaryNameFormControl.hasError('required')">
       Введённый адрес содержит некорректные символы
     </mat-error>
@@ -49,8 +48,8 @@
     <tr>
       <td>
         <mat-checkbox [(ngModel)]="inputData.dateStart.enabled" name="dateStartCheck" id="dateStartCheck"></mat-checkbox>
-        </td>
-        <td>
+      </td>
+      <td>
         <mat-form-field class="fullWidth">
           <input #diaryStartDateValueModel="ngModel" matInput [matDatepicker]="dtpStart" placeholder="С даты" [(ngModel)]="inputData.dateStart.value"
             name="dateStartValue" id="dateStartValue" momentValidateExact [disabled]="!inputData.dateStart.enabled">
@@ -79,7 +78,20 @@
       </td>
     </tr>
   </table>
-  <mat-checkbox [(ngModel)]="inputData.overwrite" name="overwriteCheck" id="overwriteCheck">Перезаписывать данные</mat-checkbox>
+  <table class="fullWidth" cellspacing="0">
+    <tr>
+      <td>
+        <mat-checkbox [(ngModel)]="inputData.overwrite" name="overwriteCheck" id="overwriteCheck">Перезаписывать данные</mat-checkbox>
+      </td>
+      <td style="width:25%;">
+        <mat-form-field class="fullWidth">
+          <input matInput placeholder="Задержка(мс)" [(ngModel)]="inputData.requestDelay" #requestDelayModel="ngModel" name="requestDelayInput"
+            id="requestDelayInput" required type="number" min="100" max="5000" step="100">
+        </mat-form-field>
+      </td>
+    </tr>
+  </table>
+
 
   <button mat-button color="primary" [disabled]="!diaryInputForm.form.valid">Пуск</button>
 
