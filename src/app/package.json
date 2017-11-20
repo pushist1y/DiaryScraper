@@ -31,11 +31,9 @@
     "protractor": "~5.1.2",
     "ts-node": "~3.2.0",
     "tslint": "~5.7.0",
-    "typescript": "~2.4.2",
+    "typescript": "^2.6.1",
     "codelyzer": "~3.2.2",
-    "moment": "^2.19.2"
-  },
-  "dependencies": {
+    "moment": "^2.19.2",
     "@angular/animations": "^5.0.0",
     "@angular/common": "^5.0.0",
     "@angular/compiler": "^5.0.0",
@@ -53,9 +51,12 @@
     "rxjs": "^5.5.2",
     "zone.js": "^0.8.14"
   },
+  "dependencies": {},
   "scripts": {
-    "start": "tsc main.ts && ng build && electron .",
-    "dist": "tsc main.ts && ng build --prod && build"
+    "start": "electron .",
+    "dist": "build",
+    "tsc": "tsc",
+    "ng": "ng"
   },
   "build": {
     "appId": "diary-scraper",
