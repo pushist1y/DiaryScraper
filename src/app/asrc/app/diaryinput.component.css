@@ -1,0 +1,10 @@
+.formWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.formWrapper>*:not(:last-child) {
+  width: 100%;
+  padding-bottom: 20px;
+}
+

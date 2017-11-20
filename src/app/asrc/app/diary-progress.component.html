@@ -1,0 +1,53 @@
+<div class="progressWrapper mat-typography">
+  <div fxLayout="row" fxFlexFill>
+
+    <div fxFlex="3">
+    </div>
+    <div fxFlex class="mat-error" style="text-align:center;" *ngIf="progressModel.currentTask?.error">
+      {{progressModel.currentTask?.error}}
+    </div>
+    <div fxFlex="3">
+    </div>
+  </div>
+  <div fxLayout="row" fxFlexFill>
+
+    <div fxFlex="3">
+    </div>
+    <div fxFlex class="progressBar">
+      <div>{{progressModel.progressValue}}%</div>
+      <mat-progress-bar mode="determinate" [value]="progressModel.progressValue"></mat-progress-bar>
+    </div>
+    <div fxFlex="3">
+    </div>
+  </div>
+
+  <div fxLayout="row" fxFlexFill>
+
+    <div fxFlex="50" class="colName">
+      Страниц скачано:
+    </div>
+    <div fxFlex="50" class="colValue">
+      {{progressModel.currentTask?.progress?.pagesDownloaded}}
+    </div>
+  </div>
+  <div fxLayout="row" fxFlexFill>
+
+    <div fxFlex="50" class="colName">
+      Изображений скачано:
+    </div>
+    <div fxFlex="50" class="colValue">
+      {{progressModel.currentTask?.progress?.imagesDownloaded}}
+    </div>
+  </div>
+  <div fxLayout="row" fxFlexFill>
+
+    <div fxFlex="50" class="colName">
+        Байт скачано:
+    </div>
+    <div fxFlex="50" class="colValue">
+      {{progressModel.currentTask?.progress?.bytesDownloaded}}
+    </div>
+  </div>
+  <button mat-button color="primary" type="button" (click)="onResetClick()" *ngIf="!progressModel.inProgress && !progressModel.isCancelling">Заново</button>
+  <button mat-button color="primary" type="button" (click)="onCancelClick()" *ngIf="progressModel.inProgress || progressModel.isCancelling" [disabled]="progressModel.isCancelling">Отмена</button>
+</div>

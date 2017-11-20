@@ -5,3 +5,5 @@ node_modules/
 *lock.json
 [Dd]ist/
 *.log
+adist/
+src/app/main.js
