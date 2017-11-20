@@ -1,6 +1,6 @@
 {
   "name": "diary-scraper",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "title": "Скачать дневник",
   "description": "Scraper for diary.ru blogs",
   "author": {
