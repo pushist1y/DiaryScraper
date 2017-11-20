@@ -239,29 +239,43 @@ namespace DiaryScraperCore
 
         private void ConfigureLog()
         {
-            _errorLogTarget = new FileTarget();
-            _errorLogTarget.Name = "errorTarget_" + Guid.NewGuid().ToString("n");
-            _errorLogTarget.FileName = Path.Combine(_descriptor.WorkingDir, "${shortdate}.log");
-            _errorLogTarget.Layout = @"${date:format=dd.MM.yyyy HH\:mm\:ss} (${level:uppercase=true}): ${message}. ${exception:format=ToString}";
-            NLog.LogManager.Configuration.AddTarget(_errorLogTarget);
+            try
+            {
+                _errorLogTarget = new FileTarget();
+                _errorLogTarget.Name = "errorTarget_" + Guid.NewGuid().ToString("n");
+                _errorLogTarget.FileName = Path.Combine(_descriptor.WorkingDir, "${shortdate}.log");
+                _errorLogTarget.Layout = @"${date:format=dd.MM.yyyy HH\:mm\:ss} (${level:uppercase=true}): ${message}. ${exception:format=ToString}";
+                NLog.LogManager.Configuration.AddTarget(_errorLogTarget);
 
-            _errorLogRule = new LoggingRule("DiaryScraperCore*", NLog.LogLevel.Warn, _errorLogTarget);
-            NLog.LogManager.Configuration.LoggingRules.Add(_errorLogRule);
+                _errorLogRule = new LoggingRule("DiaryScraperCore*", NLog.LogLevel.Warn, _errorLogTarget);
+                NLog.LogManager.Configuration.LoggingRules.Add(_errorLogRule);
 
-            NLog.LogManager.ReconfigExistingLoggers();
+                NLog.LogManager.ReconfigExistingLoggers();
+            }
+            catch
+            {
+                //ignore exception
+            }
         }
 
         private void UnsetLog()
         {
-            if (_errorLogTarget != null)
+            try
             {
-                NLog.LogManager.Configuration.RemoveTarget(_errorLogTarget.Name);
+                if (_errorLogTarget != null)
+                {
+                    NLog.LogManager.Configuration.RemoveTarget(_errorLogTarget.Name);
+                }
+                if (_errorLogRule != null)
+                {
+                    NLog.LogManager.Configuration.LoggingRules.Remove(_errorLogRule);
+                }
+                NLog.LogManager.ReconfigExistingLoggers();
             }
-            if (_errorLogRule != null)
+            catch
             {
-                NLog.LogManager.Configuration.LoggingRules.Remove(_errorLogRule);
+                //ignore exception
             }
-            NLog.LogManager.ReconfigExistingLoggers();
         }
 
         private void EnsureDirs()

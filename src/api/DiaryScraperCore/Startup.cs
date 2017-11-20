@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NLog;
+using NLog.Config;
 using NLog.Extensions.Logging;
 using NLog.Web;
 
@@ -52,6 +53,10 @@ namespace DiaryScraperCore
             loggerFactory.AddNLog();
 
             app.AddNLogWeb();
+
+            if(NLog.LogManager.Configuration == null){
+                 NLog.LogManager.Configuration= new LoggingConfiguration();
+            }
         }
     }
 }
