@@ -6,3 +6,4 @@ node_modules/
 [Dd]ist/
 *.log
 adist/
+src/app/main.js

@@ -24,4 +24,14 @@ export class ScrapeTaskService {
         url += "?" + params.toString();
         return this.http.post<ScrapeTaskDescriptor>(url, task, httpOptions);
     }
+
+    cancelScraping(guid: string): Observable<ScrapeTaskDescriptor>{
+        let url = this.apiUrl + "/scrape/" + guid;
+        return this.http.delete<ScrapeTaskDescriptor>(url);
+    }
+
+    updateScraping(guid: string): Observable<ScrapeTaskDescriptor>{
+        let url = this.apiUrl + "/scrape/" + guid;
+        return this.http.get<ScrapeTaskDescriptor>(url);
+    }
 }

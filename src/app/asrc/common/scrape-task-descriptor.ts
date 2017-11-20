@@ -9,6 +9,8 @@ export interface IScrapeTaskDescriptor {
     overwrite?: boolean;
     requestDelay?: number;
     progress?: IScrapeTaskProgress;
+    error?: string;
+    status?: number;
 }
 
 export class ScrapeTaskDescriptor implements IScrapeTaskDescriptor {
@@ -19,10 +21,21 @@ export class ScrapeTaskDescriptor implements IScrapeTaskDescriptor {
     public scrapeEnd: moment.Moment;
     public overwrite: boolean;
     public requestDelay: number;
-    public progress: IScrapeTaskProgress;
+    public progress: ScrapeTaskProgress;
+    public error: string;
+    public status: number;
 }
 
 export interface IScrapeTaskProgress {
+    currentUrl: string;
+    pagesDownloaded: number;
+    imagesDownloaded: number;
+    bytesDownloaded: number;
+    datePagesDiscovered: number;
+    datePagesProcessed: number;
+}
+
+export class ScrapeTaskProgress implements IScrapeTaskProgress {
     currentUrl: string;
     pagesDownloaded: number;
     imagesDownloaded: number;

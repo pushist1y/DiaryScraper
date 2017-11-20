@@ -17,7 +17,8 @@ import {
   MatButtonModule,
   MatIconModule,
   MatCheckboxModule,
-  MatDatepickerModule
+  MatDatepickerModule,
+  MatProgressBarModule
 
 } from '@angular/material';
 import { AppRoutingModule } from './app-routing.module';
@@ -51,7 +52,8 @@ import { HttpClientModule } from '@angular/common/http';
     MatDatepickerModule,
     MatMomentDateModule,
     AppRoutingModule,
-    HttpClientModule
+    HttpClientModule,
+    MatProgressBarModule
   ],
   providers: [DataService, ScrapeTaskService],
   bootstrap: [AppComponent]
