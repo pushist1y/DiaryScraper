@@ -4,6 +4,9 @@ App for downloading diary.ru blogs.
 
 CloudFlare bypassing codes credit goes to [Corwin75](https://github.com/Corwin75): https://github.com/Corwin75/Cloudflare-Bypass
 
+## Где скачать
+Актуальные бинарники обитают [здесь](http://static.terribles.ru/scraper/)
+
 ## Краткая инструкция
 * Приложение предназначено для скачивания блогов с сайта [Diary](http://diary.ru). 
 * Скачивание производится без пост-обработки в виде целых html-страниц, содержащих в себе посты и комментарии к ним. 
@@ -37,3 +40,6 @@ CloudFlare bypassing codes credit goes to [Corwin75](https://github.com/Corwin75
 ### 0.1.2
 * Игнорирование ошибки 404 на статике (некоторые картинки из старых постов дайри не отдаёт)
 * Добавил журналирование происходящих ошибок в рабочую папку
+### 0.2.0
+* Полностью переписан интерфейс, теперь у нас Angular 5 и Material design
+* Ошибки, связанные с журналированием, теперь игнорируются. 
