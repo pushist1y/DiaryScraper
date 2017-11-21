@@ -24,6 +24,11 @@ namespace DiaryScraperCore.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] ScrapeTaskDescriptor descriptor)
         {
+            if (_taskRunner.TasksView.Any(t => t.IsRunning))
+            {
+                descriptor.SetError("Операция по скачиванию дневника уже выполняется");
+                return Json(descriptor);
+            }
             var login = Request.GetQueryParameter("login");
             var password = Request.GetQueryParameter("password");
             _taskRunner.AddTask(descriptor, login, password);
