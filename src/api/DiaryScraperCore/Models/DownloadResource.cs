@@ -1,5 +1,8 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace DiaryScraperCore
 {
@@ -11,15 +14,61 @@ namespace DiaryScraperCore
         public string LocalPath { get; set; }
         [NotMapped]
         public bool JustCreated { get; set; } = false;
+
+        [NotMapped]
+        public string RelativePath
+        {
+            get
+            {
+                if (LocalPath == null)
+                {
+                    return null;
+                }
+                var match = Regex.Match(LocalPath, @"[\\\/]?([^\\\/]+[\\\/][^\\\/]*)$", RegexOptions.IgnoreCase);
+                if (!match.Success)
+                {
+                    return LocalPath;
+                }
+                return match.Groups[1].Value;
+            }
+        }
+
+        public string GenerateLocalPath(string prefix)
+        {
+            var fName = "";
+            var fNameMatch = Regex.Match(Url, @"([^\/]*)$", RegexOptions.IgnoreCase);
+
+            if (fNameMatch.Success)
+            {
+                fName = prefix + fNameMatch.Groups[1].Value;
+            }
+            else
+            {
+                fName = prefix + Guid.NewGuid().ToString("n") + ".dat";
+            }
+            this.LocalPath = Path.Combine(DirName, fName);
+            return this.LocalPath;
+        }
+
+        [NotMapped]
+        public virtual string DirName => "data";
     }
 
     public class DiaryPost : DownloadResource
     {
-
+        [NotMapped]
+        public override string DirName => Constants.PostsDir;
     }
 
     public class DiaryImage : DownloadResource
     {
+        [NotMapped]
+        public override string DirName => Constants.ImagesDir;
+    }
 
+    public class DiaryDatePage : DownloadResource
+    {
+        [NotMapped]
+        public DateTime PostDate { get; set; }
     }
 }

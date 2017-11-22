@@ -24,10 +24,10 @@ namespace DiaryScraperCore
         //     }
         // }
 
-        private ILogger<DiaryScraper> _logger;
-        public TaskRunner(ILogger<DiaryScraper> logger)
+        private DiaryScraperFactory _dsFac;
+        public TaskRunner(DiaryScraperFactory dsFac)
         {
-            _logger = logger;
+            _dsFac = dsFac;
         }
 
         private ReadOnlyCollection<ScrapeTaskDescriptor> _readOnlyTasks;
@@ -37,22 +37,8 @@ namespace DiaryScraperCore
         public void AddTask(ScrapeTaskDescriptor newTask, string login = null, string password = null)
         {
             _tasks.Add(newTask);
-            
-            if (!Directory.Exists(newTask.WorkingDir))
-            {
-                try
-                {
-                    Directory.CreateDirectory(newTask.WorkingDir);
-                }
-                catch (Exception e)
-                {
-                    newTask.Error = e.Message;
-                    newTask.InnerTask = Task.FromException(e);
-                }
-            }
-
-            var worker = new DiaryScraper(newTask, login, password, _logger);
-            worker.Run();
+            var scraper = _dsFac.GetScraper(newTask, login, password);
+            scraper?.Run();
         }
 
         public ScrapeTaskDescriptor RemoveTask(string guidString)

@@ -31,6 +31,7 @@ namespace DiaryScraperCore
         {
             services.AddMvc();
             services.AddSingleton<TaskRunner>();
+            services.AddTransient<DiaryScraperFactory>();
             services.AddDbContext<ScrapeContext>((options) => {
                 options.UseSqlite("Data Source=scrape.db");
             });

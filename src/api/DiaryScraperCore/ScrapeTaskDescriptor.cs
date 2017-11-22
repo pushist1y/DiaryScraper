@@ -8,20 +8,23 @@ namespace DiaryScraperCore
 {
     public class ScrapeTaskDescriptor
     {
+        [JsonIgnore]
+        private string _error = null;
+        [JsonIgnore]
+        public DiaryScraperNew Scraper { get; set; }
         public string WorkingDir { get; set; }
         [JsonIgnore]
         public Guid Guid { get; set; } = Guid.NewGuid();
         public string GuidString => this.Guid.ToString("n");
-        public ScrapeTaskProgress Progress { get; set; } = new ScrapeTaskProgress();
+        public ScrapeTaskProgress Progress => Scraper?.Progress;
         public string DiaryUrl { get; set; }
-        public string Error { get; set; }
+        public string Error => Progress?.Error ?? _error;
+        public bool IsRunning => (InnerTask == null) || (int)InnerTask.Status < 5;
         public TaskStatus? Status => InnerTask?.Status;
         [JsonIgnore]
-        public Task InnerTask { get; set; }
+        public Task InnerTask => Scraper?.Worker;
         [JsonIgnore]
-        public CancellationToken Token { get; set; }
-        [JsonIgnore]
-        public CancellationTokenSource TokenSource { get; set; }
+        public CancellationTokenSource TokenSource => Scraper?.TokenSource;
         public DateTime ScrapeStart { get; set; } = DateTime.MinValue;
         public DateTime ScrapeEnd { get; set; } = DateTime.MaxValue;
         public bool Overwrite { get; set; } = false;
@@ -41,6 +44,11 @@ namespace DiaryScraperCore
                 }
             }
         }
+
+        public void SetError(string error)
+        {
+            _error = error;
+        }
     }
 
 
@@ -54,6 +62,7 @@ namespace DiaryScraperCore
         public DateTime StartedAt { get; set; }
         public int DatePagesDiscovered { get; set; }
         public int DatePagesProcessed { get; set; }
+        public string Error { get; set; }
 
         public void PageDownloaded(byte[] data)
         {
