@@ -13,8 +13,6 @@ namespace DiaryScraperCore
         public string Url { get; set; }
         public string LocalPath { get; set; }
         [NotMapped]
-        public byte[] Data { get; set; }
-        [NotMapped]
         public bool JustCreated { get; set; } = false;
 
         [NotMapped]
@@ -22,7 +20,11 @@ namespace DiaryScraperCore
         {
             get
             {
-                var match = Regex.Match(LocalPath, @"[\\\/]?([^\\\/]+[\\\/][^\\\/]*)$");
+                if (LocalPath == null)
+                {
+                    return null;
+                }
+                var match = Regex.Match(LocalPath, @"[\\\/]?([^\\\/]+[\\\/][^\\\/]*)$", RegexOptions.IgnoreCase);
                 if (!match.Success)
                 {
                     return LocalPath;
@@ -34,7 +36,7 @@ namespace DiaryScraperCore
         public string GenerateLocalPath(string prefix)
         {
             var fName = "";
-            var fNameMatch = Regex.Match(Url, @"([^\/]*)$");
+            var fNameMatch = Regex.Match(Url, @"([^\/]*)$", RegexOptions.IgnoreCase);
 
             if (fNameMatch.Success)
             {
@@ -62,5 +64,11 @@ namespace DiaryScraperCore
     {
         [NotMapped]
         public override string DirName => Constants.ImagesDir;
+    }
+
+    public class DiaryDatePage : DownloadResource
+    {
+        [NotMapped]
+        public DateTime PostDate { get; set; }
     }
 }

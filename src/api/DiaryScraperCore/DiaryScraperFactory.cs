@@ -78,7 +78,7 @@ namespace DiaryScraperCore
 
         private string GetDiaryName(string diaryUrl)
         {
-            var match = Regex.Match(diaryUrl, @"([\w-]+)\.diary\.ru");
+            var match = Regex.Match(diaryUrl, @"([\w-]+)\.diary\.ru", RegexOptions.IgnoreCase);
             if (!match.Success)
             {
                 throw new ArgumentException($"Неправильный адрес дневника: [{diaryUrl}]");

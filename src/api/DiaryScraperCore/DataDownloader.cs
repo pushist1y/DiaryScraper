@@ -3,96 +3,117 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Cloudflare_Bypass;
 using Microsoft.Extensions.Logging;
 
 namespace DiaryScraperCore
 {
-
     public class DataDownloader
     {
+        public event EventHandler<DataDownloaderEventArgs> BeforeDownload;
+        public event EventHandler<DataDownloaderEventArgs> AfterDownload;
         private readonly string _diaryPath;
         private readonly CookieContainer _cookieContainer;
         private readonly ILogger _logger;
-        private readonly ScrapeTaskProgress _progress;
-        public DataDownloader(string diaryPath, CookieContainer cookieContainer, ILogger logger, ScrapeTaskProgress progress)
+        public DataDownloader(string diaryPath, CookieContainer cookieContainer, ILogger logger)
         {
             _diaryPath = diaryPath;
             _cookieContainer = cookieContainer;
             _logger = logger;
-            _progress = progress;
         }
 
-
-        public async Task<DownloadResource> Download(DownloadResource data, bool getData = false, bool ignore404 = true, int requestDelay = 0)
+        public async Task<DataDownloaderResult> Download(DownloadResource downloadResource, bool ignore404 = true, int requestDelay = 0)
         {
-            if (data == null || string.IsNullOrEmpty(data.Url) || string.IsNullOrEmpty(data.RelativePath))
+            if (downloadResource == null || string.IsNullOrEmpty(downloadResource.Url))
             {
                 throw new ArgumentException("Для скачивания должны быть заполнены пути к данным");
             }
-            _logger.LogInformation("Downloading data: " + data.Url);
-            _progress.CurrentUrl = data.Url;
-            var uri = new Uri(data.Url);
-            var filePath = Path.Combine(_diaryPath, data.RelativePath);
+            _logger.LogInformation("Downloading data: " + downloadResource.Url);
+            var uri = new Uri(downloadResource.Url);
+
+            var filePath = string.IsNullOrEmpty(downloadResource.RelativePath)
+                            ? string.Empty
+                            : Path.Combine(_diaryPath, downloadResource.RelativePath);
+
             var client = new CF_WebClient(_cookieContainer);
-            try
+
+            BeforeDownload?.Invoke(this, new DataDownloaderEventArgs { Resource = downloadResource });
+            Thread.Sleep(requestDelay);
+            byte[] downloadedData;
+            var retries = 0;
+            while (true)
             {
-                var downloadedData = await client.DownloadDataTaskAsync(uri);
-
-                if (data is DiaryPost)
+                try
                 {
-                    _progress.PageDownloaded(downloadedData);
+                    
+                    downloadedData = await client.DownloadDataTaskAsync(uri);
+                    break; //i want to break freeeeee
                 }
-                else if (data is DiaryImage)
+                catch (WebException e)
                 {
-                    _progress.ImageDownloaded(downloadedData);
-                }
+                    if (e.Status == WebExceptionStatus.ProtocolError && ignore404)
+                    {
+                        var response = e.Response as HttpWebResponse;
+                        if (response != null)
+                        {
+                            if (response.StatusCode == HttpStatusCode.NotFound)
+                            {
+                                _logger.LogWarning("Url not found: " + e.Response.ResponseUri.AbsoluteUri);
+                                downloadResource.LocalPath = "";
+                                return new DataDownloaderResult { Resource = downloadResource, DownloadedData = null };
+                            }
+                        }
+                    }
+                    retries += 1;
+                    _logger.LogError(e, $"Error, retry count: {retries}");
 
-                if (getData)
-                {
-                    data.Data = downloadedData;
+                    if (retries >= Constants.DownloadRetryCount)
+                    {
+                        throw;
+                    }
+                    Thread.Sleep(2000);
                 }
+            }
 
+            AfterDownload?.Invoke(this, new DataDownloaderEventArgs { Resource = downloadResource, DownloadedData = downloadedData });
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
                 using (var f = File.Create(filePath))
                 {
                     await f.WriteAsync(downloadedData, 0, downloadedData.Length);
                 }
             }
-            catch (WebException e)
-            {
-                if (e.Status == WebExceptionStatus.ProtocolError && ignore404)
-                {
-                    var response = e.Response as HttpWebResponse;
-                    if (response != null)
-                    {
-                        if (response.StatusCode == HttpStatusCode.NotFound)
-                        {
-                            _logger.LogWarning("Url not found: " + e.Response.ResponseUri.AbsoluteUri);
-                            return null;
-                        }
-                    }
-                }
-            }
-            return data;
+
+            return new DataDownloaderResult { Resource = downloadResource, DownloadedData = downloadedData };
+
         }
 
-        public async Task<IList<DownloadResource>> Download(IEnumerable<DownloadResource> dataList, bool getData = false, bool ignore404 = true, int requestDelay = 0)
+        public async Task<IList<DataDownloaderResult>> Download(IEnumerable<DownloadResource> dataList, bool ignore404 = true, int requestDelay = 0)
         {
-            var list = new List<DownloadResource>();
-            var tasks = dataList.Select(item => Download(item, ignore404, getData));
+            var list = new List<DataDownloaderResult>();
+            var tasks = dataList.Select(item => Download(item, ignore404, requestDelay));
             foreach (var task in tasks)
             {
                 var img = await task;
-                if (img != null)
-                {
-                    list.Add(img);
-                }
+                list.Add(img);
             }
             return list;
         }
 
     }
 
+    public class DataDownloaderResult
+    {
+        public DownloadResource Resource { get; set; }
+        public byte[] DownloadedData { get; set; }
+    }
+
+    public class DataDownloaderEventArgs : DataDownloaderResult
+    {
+
+    }
 
 }

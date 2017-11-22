@@ -39,7 +39,28 @@ namespace DiaryScraperCore
             _options = options;
             _postChecker = new DownloadExistingChecker<DiaryPost>(Path.Combine(_options.WorkingDir, _options.DiaryName), _context, logger);
             _imageChecker = new DownloadExistingChecker<DiaryImage>(Path.Combine(_options.WorkingDir, _options.DiaryName), _context, logger);
-            _downloader = new DataDownloader(Path.Combine(_options.WorkingDir, _options.DiaryName), _cookieContainer, _logger, Progress);
+            _downloader = new DataDownloader(Path.Combine(_options.WorkingDir, _options.DiaryName), _cookieContainer, _logger);
+            _downloader.BeforeDownload += (s, e) =>
+            {
+                if (!(e.Resource is DiaryImage))
+                {
+                    Progress.CurrentUrl = e.Resource.Url;
+                }
+            };
+
+            _downloader.AfterDownload += OnResourceDownloaded;
+        }
+
+        private void OnResourceDownloaded(object sender, DataDownloaderEventArgs args)
+        {
+            if (args.Resource is DiaryPost)
+            {
+                Progress.PageDownloaded(args.DownloadedData);
+            }
+            else if (args.Resource is DiaryImage)
+            {
+                Progress.ImageDownloaded(args.DownloadedData);
+            }
         }
 
         public Task Run()
@@ -58,6 +79,17 @@ namespace DiaryScraperCore
             catch (OperationCanceledException)
             {
                 Progress.Error = "Операция прервана пользователем";
+            }
+            catch (AggregateException e)
+            {
+                if (e.InnerException is TaskCanceledException)
+                {
+                    Progress.Error = "Операция прервана пользователем";
+                }
+                else
+                {
+                    throw;
+                }
             }
             catch (Exception e)
             {
@@ -85,7 +117,7 @@ namespace DiaryScraperCore
             _postChecker.InitializeFromContext();
             _imageChecker.InitializeFromContext();
 
-            ScanDateUrls(dateUrls, cancellationToken);
+            ScanDateUrls(dateUrls, cancellationToken).Wait();
 
         }
 
@@ -97,7 +129,7 @@ namespace DiaryScraperCore
             }
 
             var html = _webClient.DownloadString("http://www.diary.ru/");
-            var match = Regex.Match(html, @"<input[^>]*?name=""signature""[^>]*?value=""(\w+)\""[^>]*?>");
+            var match = Regex.Match(html, @"<input[^>]*?name=""signature""[^>]*?value=""(\w+)\""[^>]*?>", RegexOptions.IgnoreCase);
             if (!match.Success)
             {
                 return false;
@@ -105,7 +137,7 @@ namespace DiaryScraperCore
 
             var signature = match.Groups[1].Value;
 
-            match = Regex.Match(html, @"action=""(\/login.php\?\w+)""");
+            match = Regex.Match(html, @"action=""(\/login.php\?\w+)""", RegexOptions.IgnoreCase);
             if (!match.Success)
             {
                 return false;
@@ -119,7 +151,7 @@ namespace DiaryScraperCore
             _webClient.Headers["Content-Type"] = "application/x-www-form-urlencoded";
             var data = _webClient.UploadData(url, "POST", reqdata);
             html = data.AsAnsiString();
-            if (Regex.IsMatch(html, @"неверное имя пользователя. Или неверный пароль"))
+            if (Regex.IsMatch(html, @"неверное имя пользователя. Или неверный пароль", RegexOptions.IgnoreCase))
             {
                 return false;
             }
@@ -127,14 +159,14 @@ namespace DiaryScraperCore
             return true;
         }
 
-        private IList<DateUrlInfo> GetDateUrls(CancellationToken cancellationToken)
+        private IList<DiaryDatePage> GetDateUrls(CancellationToken cancellationToken)
         {
-            var dateUrls = new List<DateUrlInfo>();
+            var datePages = new List<DiaryDatePage>();
             var diaryUrl = $"http://{_options.DiaryName}.diary.ru";
             var calendarUrl = diaryUrl + "/?calendar";
             var html = _webClient.DownloadString(calendarUrl);
             Progress.PageDownloaded(html);
-            var matches = Regex.Matches(html, @"calendar&year=(\d+)");
+            var matches = Regex.Matches(html, @"calendar&year=(\d+)", RegexOptions.IgnoreCase);
             if (matches.Count <= 0)
             {
                 return null;
@@ -159,7 +191,7 @@ namespace DiaryScraperCore
 
                 Progress.PageDownloaded(html);
 
-                matches = Regex.Matches(html, @"diary.ru(\/\?date=(\d+)-(\d+)-(\d+))");
+                matches = Regex.Matches(html, @"diary.ru(\/\?date=(\d+)-(\d+)-(\d+))", RegexOptions.IgnoreCase);
                 foreach (Match m in matches)
                 {
                     var date = new DateTime(Convert.ToInt32(m.Groups[2].Value),
@@ -170,30 +202,26 @@ namespace DiaryScraperCore
                         continue;
                     }
 
-                    dateUrls.Add(new DateUrlInfo { Url = diaryUrl + m.Groups[1].Value, PostDate = date });
+                    datePages.Add(new DiaryDatePage { Url = diaryUrl + m.Groups[1].Value, PostDate = date });
                 }
             }
 
-            return dateUrls;
+            return datePages;
         }
 
-        private bool ScanDateUrls(IEnumerable<DateUrlInfo> dateUrls, CancellationToken cancellationToken)
+        private async Task<bool> ScanDateUrls(IEnumerable<DiaryDatePage> dateUrls, CancellationToken cancellationToken)
         {
             var pattern = $@"({_options.DiaryName}\.diary\.ru\/p\w+\.htm).{{0,30}}URL";
             foreach (var urlInfo in dateUrls)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                Thread.Sleep(_options.RequestDelay);
-                cancellationToken.ThrowIfCancellationRequested();
-                var html = _webClient.DownloadString(urlInfo.Url);
-
-                Progress.PageDownloaded(html);
-
-                var matches = Regex.Matches(html, pattern);
+                var downloadResult = await _downloader.Download(urlInfo, false, _options.RequestDelay);
+                var html = downloadResult.DownloadedData.AsAnsiString();
+                var matches = Regex.Matches(html, pattern, RegexOptions.IgnoreCase);
                 foreach (Match m in matches)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    DownloadPost("http://" + m.Groups[1].Value, urlInfo.PostDate).Wait();
+                    await DownloadPost("http://" + m.Groups[1].Value, urlInfo.PostDate);
                 }
 
                 Progress.DatePagesProcessed += 1;
@@ -212,20 +240,20 @@ namespace DiaryScraperCore
 
             postInfo.GenerateLocalPath(date.ToString("yyyy-MM-dd") + "-");
 
-            await _downloader.Download(postInfo, true, false, _options.RequestDelay);
+            var downloadResult = await _downloader.Download(postInfo, false, _options.RequestDelay);
 
             var enc1251 = Encoding.GetEncoding(1251);
-            var html = enc1251.GetString(postInfo.Data);
+            var html = enc1251.GetString(downloadResult.DownloadedData);
 
-            var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))");
+            var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))", RegexOptions.IgnoreCase);
             var imageUrls = matches.Select(m2 => m2.Groups[1].Value).ToList();
             var diaryImages = await _imageChecker.FilterUrls(imageUrls.Distinct(), _options.Overwrite);
             foreach (var img in diaryImages)
             {
                 img.GenerateLocalPath(Guid.NewGuid().ToString("n") + "-");
             }
-            await _downloader.Download(diaryImages, false, true, 0);
-            await _imageChecker.AddProcessedData(diaryImages);
+            var downloadResults = await _downloader.Download(diaryImages, true, 0);
+            await _imageChecker.AddProcessedData(downloadResults.Select(d => d.Resource as DiaryImage));
             await _postChecker.AddProcessedData(postInfo);
 
         }
@@ -244,9 +272,4 @@ namespace DiaryScraperCore
 
     }
 
-    public class DateUrlInfo
-    {
-        public DateTime PostDate { get; set; }
-        public string Url { get; set; }
-    }
 }
