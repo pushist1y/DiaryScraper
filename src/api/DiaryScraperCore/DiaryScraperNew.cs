@@ -42,7 +42,7 @@ namespace DiaryScraperCore
             {
                 if (!(e.Resource is DiaryImage))
                 {
-                    Progress.CurrentUrl = e.Resource.Url;
+                    Progress.CurrentUrl = e.Resource.Url.ToLower();
                 }
             };
 
@@ -51,7 +51,7 @@ namespace DiaryScraperCore
 
         private void OnResourceDownloaded(object sender, DataDownloaderEventArgs args)
         {
-            if (args.Resource is DiaryPost)
+            if (args.Resource is DiaryPost || args.Resource is DiaryDatePage)
             {
                 Progress.PageDownloaded(args.DownloadedData);
             }
@@ -86,6 +86,8 @@ namespace DiaryScraperCore
                 }
                 else
                 {
+                    Progress.Error = e.InnerException.Message;
+                    _logger.LogError(e.InnerException, "Error");
                     throw;
                 }
             }
@@ -196,29 +198,35 @@ namespace DiaryScraperCore
                         continue;
                     }
 
-                    datePages.Add(new DiaryDatePage { Url = diaryUrl + m.Groups[1].Value, PostDate = date });
+                    var datePage = _downloadExistingChecker.CheckUrlAsync<DiaryDatePage>(diaryUrl + m.Groups[1].Value, _options.Overwrite).Result;
+                    if (datePage != null)
+                    {
+                        datePage.PostDate = date;
+                        datePages.Add(datePage);
+                    }
                 }
             }
 
             return datePages;
         }
 
-        private async Task<bool> ScanDateUrlsAsync(IEnumerable<DiaryDatePage> dateUrls, CancellationToken cancellationToken)
+        private async Task<bool> ScanDateUrlsAsync(IEnumerable<DiaryDatePage> datePages, CancellationToken cancellationToken)
         {
             var pattern = $@"({_options.DiaryName}\.diary\.ru\/p\w+\.htm).{{0,30}}URL";
-            foreach (var urlInfo in dateUrls)
+            foreach (var datePage in datePages)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var downloadResult = await _downloader.Download(urlInfo, false, _options.RequestDelay);
+                var downloadResult = await _downloader.Download(datePage, false, _options.RequestDelay);
                 var html = downloadResult.DownloadedData.AsAnsiString();
                 var matches = Regex.Matches(html, pattern, RegexOptions.IgnoreCase);
                 foreach (Match m in matches)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    await DownloadPostAsync("http://" + m.Groups[1].Value, urlInfo.PostDate);
+                    await DownloadPostAsync("http://" + m.Groups[1].Value, datePage.PostDate);
                 }
 
                 Progress.DatePagesProcessed += 1;
+                await _downloadExistingChecker.AddProcessedDataAsync(datePage);
             }
             return true;
         }

@@ -59,7 +59,7 @@ namespace DiaryScraperCore
             }
             catch (Exception e)
             {
-                _logger.LogError("Error", e);
+                _logger.LogError(e, "Error");
                 descriptor.SetError(e.Message);
                 return null;
             }

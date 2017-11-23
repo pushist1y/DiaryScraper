@@ -36,7 +36,7 @@ namespace DiaryScraperCore
                 return cachedDict as Dictionary<string, T>;
             }
 
-            var newDict = _context.Set<T>().ToDictionary(i => i.Url, i => i);
+            var newDict = _context.Set<T>().ToDictionary(i => i.Url.ToLower(), i => i);
             _existingCache[typeof(T)] = newDict;
             return newDict;
         }
@@ -48,18 +48,24 @@ namespace DiaryScraperCore
 
             foreach (var url in urls)
             {
-                if (existingData.TryGetValue(url, out var dataProcessed))
+                if (existingData.TryGetValue(url.ToLower(), out var dataProcessed))
                 {
-                    var filePath = Path.Combine(_diaryDir, dataProcessed.RelativePath);
-                    if (File.Exists(filePath))
+                    var filePath = string.IsNullOrEmpty(dataProcessed.RelativePath)
+                                ? string.Empty
+                                : Path.Combine(_diaryDir, dataProcessed.RelativePath);
+                    var fileExists = File.Exists(filePath);
+                    if (string.IsNullOrEmpty(dataProcessed.RelativePath) || fileExists)
                     {
                         if (overwrite && !dataProcessed.JustCreated)
                         {
                             _logger.LogInformation($"Overwriting processed {typeof(T).Name}: " + url);
-                            File.Delete(filePath);
+                            if (fileExists)
+                            {
+                                File.Delete(filePath);
+                            }
                             _context.Set<T>().Remove(dataProcessed);
-                            existingData.Remove(url);
-                            downloadingImages.Add(new T{Url = url, JustCreated = true});
+                            existingData.Remove(url.ToLower());
+                            downloadingImages.Add(new T { Url = url.ToLower(), JustCreated = true });
                         }
                         else
                         {
@@ -70,7 +76,7 @@ namespace DiaryScraperCore
                 }
                 else
                 {
-                    downloadingImages.Add(new T{Url = url, JustCreated = true});
+                    downloadingImages.Add(new T { Url = url.ToLower(), JustCreated = true });
                 }
             }
 
@@ -92,7 +98,7 @@ namespace DiaryScraperCore
             await _context.Set<T>().AddRangeAsync(dataList);
             foreach (var data in dataList)
             {
-                existingData[data.Url] = data;
+                existingData[data.Url.ToLower()] = data;
             }
             await _context.SaveChangesAsync();
         }

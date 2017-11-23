@@ -12,9 +12,10 @@ using System;
 namespace DiaryScraperCore.Migrations
 {
     [DbContext(typeof(ScrapeContext))]
-    partial class ScrapeContextModelSnapshot : ModelSnapshot
+    [Migration("20171123200439_DiaryDatePages")]
+    partial class DiaryDatePages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

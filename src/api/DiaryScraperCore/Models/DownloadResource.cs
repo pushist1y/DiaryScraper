@@ -68,7 +68,6 @@ namespace DiaryScraperCore
 
     public class DiaryDatePage : DownloadResource
     {
-        [NotMapped]
         public DateTime PostDate { get; set; }
     }
 }

@@ -76,6 +76,9 @@ export class DiaryProgressComponent implements OnInit {
         this.updateTaskData(updatedTask);
         if ((updatedTask.status && updatedTask.status >= 5) || !!updatedTask.error) {
           this.stopProgress();
+          if (updatedTask.status && updatedTask.status == 5 && updatedTask.progress.datePagesDiscovered == 0) {
+            this.progressModel.progressValue = 100;
+          }
         }
       }, (error: HttpErrorResponse) => {
         this.stopProgress();
