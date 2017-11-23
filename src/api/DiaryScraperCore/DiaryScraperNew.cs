@@ -25,8 +25,7 @@ namespace DiaryScraperCore
         public readonly ScrapeTaskProgress Progress = new ScrapeTaskProgress();
         private readonly DiaryScraperOptions _options;
         private readonly ScrapeContext _context;
-        private readonly DownloadExistingChecker<DiaryPost> _postChecker;
-        private readonly DownloadExistingChecker<DiaryImage> _imageChecker;
+        private readonly DownloadExistingChecker _downloadExistingChecker;
         private readonly DataDownloader _downloader;
         public DiaryScraperNew(ILogger<DiaryScraperNew> logger, ScrapeContext context, DiaryScraperOptions options)
         {
@@ -37,8 +36,7 @@ namespace DiaryScraperCore
 
             _context = context;
             _options = options;
-            _postChecker = new DownloadExistingChecker<DiaryPost>(Path.Combine(_options.WorkingDir, _options.DiaryName), _context, logger);
-            _imageChecker = new DownloadExistingChecker<DiaryImage>(Path.Combine(_options.WorkingDir, _options.DiaryName), _context, logger);
+            _downloadExistingChecker = new DownloadExistingChecker(Path.Combine(_options.WorkingDir, _options.DiaryName), context, _logger);
             _downloader = new DataDownloader(Path.Combine(_options.WorkingDir, _options.DiaryName), _cookieContainer, _logger);
             _downloader.BeforeDownload += (s, e) =>
             {
@@ -114,10 +112,7 @@ namespace DiaryScraperCore
             var dateUrls = GetDateUrls(cancellationToken);
             Progress.DatePagesDiscovered = dateUrls.Count;
 
-            _postChecker.InitializeFromContext();
-            _imageChecker.InitializeFromContext();
-
-            ScanDateUrls(dateUrls, cancellationToken).Wait();
+            ScanDateUrlsAsync(dateUrls, cancellationToken).Wait();
 
         }
 
@@ -188,7 +183,6 @@ namespace DiaryScraperCore
                 cancellationToken.ThrowIfCancellationRequested();
                 Thread.Sleep(_options.RequestDelay); // delay web requests
                 html = _webClient.DownloadString(yearUrl);
-
                 Progress.PageDownloaded(html);
 
                 matches = Regex.Matches(html, @"diary.ru(\/\?date=(\d+)-(\d+)-(\d+))", RegexOptions.IgnoreCase);
@@ -209,7 +203,7 @@ namespace DiaryScraperCore
             return datePages;
         }
 
-        private async Task<bool> ScanDateUrls(IEnumerable<DiaryDatePage> dateUrls, CancellationToken cancellationToken)
+        private async Task<bool> ScanDateUrlsAsync(IEnumerable<DiaryDatePage> dateUrls, CancellationToken cancellationToken)
         {
             var pattern = $@"({_options.DiaryName}\.diary\.ru\/p\w+\.htm).{{0,30}}URL";
             foreach (var urlInfo in dateUrls)
@@ -221,7 +215,7 @@ namespace DiaryScraperCore
                 foreach (Match m in matches)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    await DownloadPost("http://" + m.Groups[1].Value, urlInfo.PostDate);
+                    await DownloadPostAsync("http://" + m.Groups[1].Value, urlInfo.PostDate);
                 }
 
                 Progress.DatePagesProcessed += 1;
@@ -229,9 +223,9 @@ namespace DiaryScraperCore
             return true;
         }
 
-        private async Task DownloadPost(string url, DateTime date)
+        private async Task DownloadPostAsync(string url, DateTime date)
         {
-            var postInfo = await _postChecker.CheckUrl(url, _options.Overwrite);
+            var postInfo = await _downloadExistingChecker.CheckUrlAsync<DiaryPost>(url, _options.Overwrite);
 
             if (postInfo == null)
             {
@@ -247,14 +241,14 @@ namespace DiaryScraperCore
 
             var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))", RegexOptions.IgnoreCase);
             var imageUrls = matches.Select(m2 => m2.Groups[1].Value).ToList();
-            var diaryImages = await _imageChecker.FilterUrls(imageUrls.Distinct(), _options.Overwrite);
+            var diaryImages = await _downloadExistingChecker.FilterUrlsAsync<DiaryImage>(imageUrls.Distinct(), _options.Overwrite);
             foreach (var img in diaryImages)
             {
                 img.GenerateLocalPath(Guid.NewGuid().ToString("n") + "-");
             }
             var downloadResults = await _downloader.Download(diaryImages, true, 0);
-            await _imageChecker.AddProcessedData(downloadResults.Select(d => d.Resource as DiaryImage));
-            await _postChecker.AddProcessedData(postInfo);
+            await _downloadExistingChecker.AddProcessedDataAsync(downloadResults.Select(d => d.Resource as DiaryImage));
+            await _downloadExistingChecker.AddProcessedDataAsync(postInfo);
 
         }
     }

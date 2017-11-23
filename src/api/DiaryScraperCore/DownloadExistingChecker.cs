@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,10 +8,9 @@ using Microsoft.Extensions.Logging;
 namespace DiaryScraperCore
 {
 
-    public class DownloadExistingChecker<T> where T : DownloadResource, new()
+    public class DownloadExistingChecker
     {
 
-        private Dictionary<string, T> _existingData = new Dictionary<string, T>();
         private readonly ScrapeContext _context;
         private readonly ILogger _logger;
         private readonly string _diaryDir;
@@ -22,48 +22,55 @@ namespace DiaryScraperCore
             _diaryDir = diaryDir;
         }
 
-        private string _dataName => (typeof(T) == typeof(DiaryPost)) ? "post" : "image";
-        private string _directoryName => (typeof(T) == typeof(DiaryPost)) ? "posts" : "images";
-
-        public void InitializeFromContext()
+        public async Task<T> CheckUrlAsync<T>(string url, bool overwrite) where T : DownloadResource, new()
         {
-            _existingData = _context.Set<T>().ToDictionary(i => i.Url, i => i);
+            var array = new[] { url } as IEnumerable<string>;
+            return (await FilterUrlsAsync<T>(array, overwrite)).FirstOrDefault();
         }
 
-        public async Task<T> CheckUrl(string url, bool overwrite)
+        private Dictionary<Type, object> _existingCache = new Dictionary<Type, object>();
+        private Dictionary<string, T> GetExistingData<T>() where T : DownloadResource, new()
         {
-            return (await FilterUrls(new[] { url }, overwrite)).FirstOrDefault();
+            if (_existingCache.TryGetValue(typeof(T), out var cachedDict))
+            {
+                return cachedDict as Dictionary<string, T>;
+            }
+
+            var newDict = _context.Set<T>().ToDictionary(i => i.Url, i => i);
+            _existingCache[typeof(T)] = newDict;
+            return newDict;
         }
 
-        public async Task<IList<T>> FilterUrls(IEnumerable<string> urls, bool overwrite)
+        public async Task<IList<T>> FilterUrlsAsync<T>(IEnumerable<string> urls, bool overwrite) where T : DownloadResource, new()
         {
             var downloadingImages = new List<T>();
+            var existingData = GetExistingData<T>();
 
             foreach (var url in urls)
             {
-                if (_existingData.TryGetValue(url, out var dataProcessed))
+                if (existingData.TryGetValue(url, out var dataProcessed))
                 {
                     var filePath = Path.Combine(_diaryDir, dataProcessed.RelativePath);
                     if (File.Exists(filePath))
                     {
                         if (overwrite && !dataProcessed.JustCreated)
                         {
-                            _logger.LogInformation($"Overwriting processed {_dataName}: " + url);
+                            _logger.LogInformation($"Overwriting processed {typeof(T).Name}: " + url);
                             File.Delete(filePath);
                             _context.Set<T>().Remove(dataProcessed);
-                            _existingData.Remove(url);
-                            downloadingImages.Add(new T() { Url = url, JustCreated = true });
+                            existingData.Remove(url);
+                            downloadingImages.Add(new T{Url = url, JustCreated = true});
                         }
                         else
                         {
-                            _logger.LogInformation($"Skipping processed {_dataName}: " + url);
+                            _logger.LogInformation($"Skipping processed {typeof(T).Name}: " + url);
                             continue;
                         }
                     }
                 }
                 else
                 {
-                    downloadingImages.Add(new T() { Url = url, JustCreated = true });
+                    downloadingImages.Add(new T{Url = url, JustCreated = true});
                 }
             }
 
@@ -73,17 +80,19 @@ namespace DiaryScraperCore
         }
 
 
-        public async Task AddProcessedData(T dataItem)
+        public async Task AddProcessedDataAsync<T>(T dataItem) where T : DownloadResource, new()
         {
-            await AddProcessedData(new T[] { dataItem });
+            var array = new T[] { dataItem } as IEnumerable<T>;
+            await AddProcessedDataAsync(array);
         }
-        
-        public async Task AddProcessedData(IEnumerable<T> dataList)
+
+        public async Task AddProcessedDataAsync<T>(IEnumerable<T> dataList) where T : DownloadResource, new()
         {
+            var existingData = GetExistingData<T>();
             await _context.Set<T>().AddRangeAsync(dataList);
             foreach (var data in dataList)
             {
-                _existingData[data.Url] = data;
+                existingData[data.Url] = data;
             }
             await _context.SaveChangesAsync();
         }
