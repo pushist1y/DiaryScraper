@@ -39,10 +39,10 @@ export class DiaryProgressComponent implements OnInit {
     newTask.overwrite = this.inputData.overwrite;
     newTask.requestDelay = this.inputData.requestDelay;
     if (this.inputData.dateStart.enabled) {
-      newTask.scrapeStart = this.inputData.dateStart.value;
+      newTask.scrapeStart = this.inputData.dateStart.value.utc().subtract(new Date().getTimezoneOffset(), 'm');
     }
     if (this.inputData.dateEnd.enabled) {
-      newTask.scrapeEnd = this.inputData.dateEnd.value;
+      newTask.scrapeEnd = this.inputData.dateEnd.value.utc().subtract(new Date().getTimezoneOffset(), 'm')
     }
 
     this.scrapeService
