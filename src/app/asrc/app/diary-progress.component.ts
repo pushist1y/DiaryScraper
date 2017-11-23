@@ -6,6 +6,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { ScrapeTaskService } from '../services/scrape-task-service';
 import { ScrapeTaskDescriptor } from '../common/scrape-task-descriptor';
 import { Observable, Subscription } from 'rxjs/Rx';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-diary-progress',
@@ -44,16 +45,22 @@ export class DiaryProgressComponent implements OnInit {
       newTask.scrapeEnd = this.inputData.dateEnd.value;
     }
 
-    this.scrapeService.startScraping(newTask, this.inputData.diaryLogin, this.inputData.diaryPassword).subscribe(returnedTask => {
-      console.log("starting scraping");
-      this.updateTaskData(returnedTask);
-      this.progressModel.inProgress = true;
-      this.progressModel.scheduler = Observable.interval(1000);
-      this.progressModel.subscription = this.progressModel.scheduler.subscribe((value: number) => {
-        console.log("calling refresh");
-        this.refreshTask();
+    this.scrapeService
+      .startScraping(newTask, this.inputData.diaryLogin, this.inputData.diaryPassword)
+      .subscribe(returnedTask => {
+        console.log("starting scraping");
+        this.updateTaskData(returnedTask);
+        this.progressModel.inProgress = true;
+        this.progressModel.scheduler = Observable.interval(1000);
+        this.progressModel.subscription = this.progressModel.scheduler.subscribe((value: number) => {
+          console.log("calling refresh");
+          this.refreshTask();
+        });
+      }, (error: HttpErrorResponse) => {
+        this.stopProgress();
+        this.progressModel.currentTask = newTask;
+        this.progressModel.currentTask.error = error.message;
       });
-    });
 
   }
 
@@ -70,6 +77,9 @@ export class DiaryProgressComponent implements OnInit {
         if ((updatedTask.status && updatedTask.status >= 5) || !!updatedTask.error) {
           this.stopProgress();
         }
+      }, (error: HttpErrorResponse) => {
+        this.stopProgress();
+        this.progressModel.currentTask.error = error.message;
       });
   }
 
@@ -82,8 +92,10 @@ export class DiaryProgressComponent implements OnInit {
 
   stopProgress() {
     console.log("stopping progress");
-    this.progressModel.subscription.unsubscribe();
-    this.progressModel.subscription = null;
+    if (this.progressModel.subscription) {
+      this.progressModel.subscription.unsubscribe();
+      this.progressModel.subscription = null;
+    }
     this.progressModel.scheduler = null;
     this.progressModel.inProgress = false;
   }
@@ -100,7 +112,9 @@ export class DiaryProgressComponent implements OnInit {
         console.log("cancel finished");
         this.updateTaskData(cancelledTask);
         this.progressModel.isCancelling = false;
-
+      }, (error: HttpErrorResponse) => {
+        this.progressModel.isCancelling = false;
+        this.progressModel.currentTask.error = error.message;
       })
   }
 
@@ -117,15 +131,6 @@ export class DiaryProgressComponent implements OnInit {
 
     this.dataService.currentData.subscribe(inputData => this.inputData = inputData);
     this.startWork();
-    // this.router.events.subscribe(event => {
-    //   if (event instanceof NavigationEnd) {
-    //     let typedEvent = event as NavigationEnd;
-    //     if (!typedEvent.url.includes("progress")) {
-    //       return;
-    //     }
-    //     this.startWork();
-    //   }
-    // });
 
   }
 
