@@ -7,6 +7,7 @@ import { ScrapeTaskService } from '../services/scrape-task-service';
 import { ScrapeTaskDescriptor } from '../common/scrape-task-descriptor';
 import { Observable, Subscription } from 'rxjs/Rx';
 import { HttpErrorResponse } from '@angular/common/http';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-diary-progress',
@@ -39,10 +40,10 @@ export class DiaryProgressComponent implements OnInit {
     newTask.overwrite = this.inputData.overwrite;
     newTask.requestDelay = this.inputData.requestDelay;
     if (this.inputData.dateStart.enabled) {
-      newTask.scrapeStart = this.inputData.dateStart.value.utc().subtract(new Date().getTimezoneOffset(), 'm');
+      newTask.scrapeStart = moment(this.inputData.dateStart.value).utc().subtract(new Date().getTimezoneOffset(), 'm');
     }
     if (this.inputData.dateEnd.enabled) {
-      newTask.scrapeEnd = this.inputData.dateEnd.value.utc().subtract(new Date().getTimezoneOffset(), 'm')
+      newTask.scrapeEnd = moment(this.inputData.dateEnd.value).utc().subtract(new Date().getTimezoneOffset(), 'm')
     }
 
     this.scrapeService
