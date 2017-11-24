@@ -1,11 +1,12 @@
 # DiaryScraper
-## Disclamer
+## Disclaimer
 App for downloading diary.ru blogs. 
 
 CloudFlare bypassing codes credit goes to [Corwin75](https://github.com/Corwin75): https://github.com/Corwin75/Cloudflare-Bypass
 
 ## Где скачать
 Актуальные бинарники обитают [здесь](http://static.terribles.ru/scraper/)
+Доступны дистрибутивы под Windows и Linux (Ubuntu, Debian, Mint). Если найдётся кто-то, желающий собрать проект под макосью, пишите в Issue. 
 
 ## Краткая инструкция
 * Приложение предназначено для скачивания блогов с сайта [Diary](http://diary.ru). 

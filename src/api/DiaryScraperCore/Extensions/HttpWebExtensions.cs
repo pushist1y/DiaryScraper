@@ -42,6 +42,13 @@ namespace DiaryScraperCore
             return html;
         }
 
+        public static byte[] ToAnsiByteArray(this string source)
+        {
+            var enc1251 = Encoding.GetEncoding(1251);
+            var bytes = Encoding.UTF8.GetBytes(source);
+            return Encoding.Convert(Encoding.UTF8, enc1251, bytes);
+        }
+
         public static byte[] Combine(this IEnumerable<byte[]> listOfByteArrays)
         {
             byte[] ret = new byte[listOfByteArrays.Sum(x => x.Length)];

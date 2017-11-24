@@ -27,6 +27,7 @@ namespace DiaryScraperCore
         private readonly ScrapeContext _context;
         private readonly DownloadExistingChecker _downloadExistingChecker;
         private readonly DataDownloader _downloader;
+        private readonly DiaryMoreLinksFixer _moreFixer;
         public DiaryScraperNew(ILogger<DiaryScraperNew> logger, ScrapeContext context, DiaryScraperOptions options)
         {
             _logger = logger;
@@ -47,6 +48,8 @@ namespace DiaryScraperCore
             };
 
             _downloader.AfterDownload += OnResourceDownloaded;
+            
+            _moreFixer = new DiaryMoreLinksFixer(_downloader, _options.WorkingDir, _options.DiaryName);
         }
 
         private void OnResourceDownloaded(object sender, DataDownloaderEventArgs args)
@@ -246,6 +249,7 @@ namespace DiaryScraperCore
 
             var enc1251 = Encoding.GetEncoding(1251);
             var html = enc1251.GetString(downloadResult.DownloadedData);
+            await _moreFixer.FixMore(downloadResult);
 
             var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))", RegexOptions.IgnoreCase);
             var imageUrls = matches.Select(m2 => m2.Groups[1].Value).ToList();
