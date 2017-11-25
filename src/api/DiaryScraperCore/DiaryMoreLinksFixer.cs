@@ -116,19 +116,19 @@ namespace DiaryScraperCore
                     }
                     var newDiv = docFull.CreateElement("div");
                     elementStart.Before(newDiv);
-                    var elementsToCopy = new List<IElement>();
-                    var currentElement = elementStart.NextElementSibling;
-                    while (currentElement != null)
+                    var nodesToCopy = new List<INode>();
+                    var currentNode = elementStart.NextSibling;
+                    while (currentNode != null)
                     {
-                        if (currentElement == elementEnd)
+                        if (currentNode == elementEnd)
                         {
                             break;
                         }
-                        elementsToCopy.Add(currentElement);
-                        currentElement = currentElement.NextElementSibling;
+                        nodesToCopy.Add(currentNode);
+                        currentNode = currentNode.NextSibling;
                     }
 
-                    foreach (var el in elementsToCopy)
+                    foreach (var el in nodesToCopy)
                     {
                         newDiv.AppendChild(el);
                     }
@@ -164,7 +164,6 @@ namespace DiaryScraperCore
             var optionsPageData = await _dataDownloader.Download(resource, false, 1000);
             var doc = _parser.Parse(optionsPageData.DownloadedData.AsAnsiString());
             var element = doc.QuerySelector("input[type='radio'][name='more_type']:checked");
-            Console.WriteLine(element.GetAttribute("value"));
             _moreType = (DiaryMoreLinksType)Convert.ToInt32(element.GetAttribute("value"));
 
         }

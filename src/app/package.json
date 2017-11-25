@@ -1,6 +1,6 @@
 {
   "name": "diary-scraper",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "title": "Скачать дневник",
   "description": "Scraper for diary.ru blogs",
   "author": {
@@ -72,7 +72,8 @@
       ]
     },
     "mac": {
-      "category": "diary-scraper"
+      "category": "diary-scraper",
+      "target": ["dir"]
     },
     "linux": {
       "category": "diary-scraper",
