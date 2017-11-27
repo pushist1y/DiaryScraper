@@ -12,6 +12,8 @@ using Microsoft.Extensions.Logging;
 
 namespace DiaryScraperCore
 {
+
+
     public class ScraperFinishedArguments
     { }
     public class DiaryScraperNew

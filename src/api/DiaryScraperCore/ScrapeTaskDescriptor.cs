@@ -6,25 +6,21 @@ using Newtonsoft.Json;
 
 namespace DiaryScraperCore
 {
-    public class ScrapeTaskDescriptor
+    public class ScrapeTaskDescriptor : TaskDescriptorBase
     {
-        [JsonIgnore]
-        private string _error = null;
+
         [JsonIgnore]
         public DiaryScraperNew Scraper { get; set; }
-        public string WorkingDir { get; set; }
-        [JsonIgnore]
-        public Guid Guid { get; set; } = Guid.NewGuid();
-        public string GuidString => this.Guid.ToString("n");
+
         public ScrapeTaskProgress Progress => Scraper?.Progress;
         public string DiaryUrl { get; set; }
-        public string Error => Progress?.Error ?? _error;
+        public override string Error => Progress?.Error ?? _error;
         public bool IsRunning => (InnerTask == null) || (int)InnerTask.Status < 5;
-        public TaskStatus? Status => InnerTask?.Status;
+
         [JsonIgnore]
-        public Task InnerTask => Scraper?.Worker;
+        public override Task InnerTask => Scraper?.Worker;
         [JsonIgnore]
-        public CancellationTokenSource TokenSource => Scraper?.TokenSource;
+        public override CancellationTokenSource TokenSource => Scraper?.TokenSource;
         public DateTime ScrapeStart { get; set; } = DateTime.MinValue;
         public DateTime ScrapeEnd { get; set; } = DateTime.MaxValue;
         public bool Overwrite { get; set; } = false;
@@ -45,10 +41,7 @@ namespace DiaryScraperCore
             }
         }
 
-        public void SetError(string error)
-        {
-            _error = error;
-        }
+
     }
 
 
