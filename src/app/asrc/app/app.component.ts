@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { slideInDownAnimation } from './animations';
 import { AppStateService } from '../services/appstate.service';
 import { ApplicationState } from '../common/app-state';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -11,7 +12,8 @@ import { ApplicationState } from '../common/app-state';
 })
 export class AppComponent {
 
-  constructor(private appStateService: AppStateService) {
+  constructor(private appStateService: AppStateService,
+    private router: Router) {
 
   }
 
@@ -26,5 +28,13 @@ export class AppComponent {
     appState.title = 'Выгрузка дневников';
     appState.menuEnabled = true;
     this.appStateService.changeState(appState);
+  }
+
+  scrapeClick() {
+    this.router.navigateByUrl("/input");
+  }
+
+  parseClick() {
+    this.router.navigateByUrl("/parse");
   }
 }

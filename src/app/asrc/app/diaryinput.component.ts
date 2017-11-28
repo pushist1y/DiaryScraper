@@ -1,10 +1,8 @@
 /// <reference path="../../node_modules/electron/electron.d.ts"/>
-//c:\work\DiaryScraper\src\app\node_modules\@types\node\index.d.ts 
 
 import { Component, OnInit, ViewChild, Directive, Input, HostBinding } from '@angular/core';
 import { FormControl, FormGroupDirective, NgForm, Validators, ValidatorFn, Validator, AbstractControl, NgModel, NG_VALIDATORS } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { Location } from '@angular/common';
 import { DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { Router } from '@angular/router';
 import { slideInDownAnimation } from './animations';
@@ -45,7 +43,6 @@ export const RU_FORMATS = {
 export class DiaryInputComponent implements OnInit {
 
   constructor(private adapter: DateAdapter<any>,
-    private location: Location,
     private router: Router,
     private dataService: DataService,
     private appStateService: AppStateService) {
@@ -54,7 +51,6 @@ export class DiaryInputComponent implements OnInit {
 
   @HostBinding('@routeAnimation') routeAnimation = true;
   @HostBinding('style.display') display = 'block';
-  // @HostBinding('style.position') position = 'absolute';
 
   private subscriptions: Array<Subscription> = new Array<Subscription>();
   private appState: ApplicationState = new ApplicationState();

@@ -28,6 +28,8 @@ import { DataService } from '../services/data.service';
 import { ScrapeTaskService } from '../services/scrape-task-service';
 import { HttpClientModule } from '@angular/common/http';
 import { AppStateService } from '../services/appstate.service';
+import { DiaryParseInputComponent } from './diary-parse-input.component';
+import { ParseInputDataService } from '../services/parse-input-service';
 
 
 
@@ -36,7 +38,8 @@ import { AppStateService } from '../services/appstate.service';
     AppComponent,
     DiaryInputComponent,
     MomentValidateExactDirective,
-    DiaryProgressComponent
+    DiaryProgressComponent,
+    DiaryParseInputComponent
   ],
   imports: [
     BrowserModule,
@@ -58,7 +61,7 @@ import { AppStateService } from '../services/appstate.service';
     MatProgressBarModule,
     MatMenuModule
   ],
-  providers: [DataService, ScrapeTaskService, AppStateService],
+  providers: [DataService, ScrapeTaskService, AppStateService, ParseInputDataService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

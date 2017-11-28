@@ -7,11 +7,11 @@
         <span>Действия</span>
       </button>
       <mat-menu #menu="matMenu">
-        <button mat-menu-item>
+        <button mat-menu-item (click)="scrapeClick()">
           <mat-icon>dialpad</mat-icon>
           <span>Выгрузка</span>
         </button>
-        <button mat-menu-item>
+        <button mat-menu-item (click)="parseClick()">
           <mat-icon>voicemail</mat-icon>
           <span>Обработка</span>
         </button>
