@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
+using AngleSharp.Dom.Html;
 using AngleSharp.Parser.Html;
 using AngleSharp.Xml;
 
@@ -28,21 +29,82 @@ namespace DiaryScraperCore
             _diaryName = diaryName;
             _diaryDir = Path.Combine(workingDir, diaryName);
         }
-        public async Task FixMore(DataDownloaderResult downloadedDiaryPost)
+
+        protected async Task<bool> FixVoting(IHtmlDocument doc)
         {
-            await DetectMoreType();
-            if (this._moreType == DiaryMoreLinksType.Preloaded)
+            var votingDiv = doc.QuerySelector("div.voting");
+            if (votingDiv == null)
             {
-                return;
+                return false;
             }
+
+            var linkElement = votingDiv.QuerySelector("a[id*='poll']");
+            if (linkElement == null)
+            {
+                return false;
+            }
+
+            
+
+            var signatureElement = votingDiv.QuerySelector("input[name='signature']");
+            var signature = signatureElement.GetAttribute("value");
+
+            var url = linkElement.GetAttribute("href");
+            url += "&js&signature=" + signature;
+            var resource = new DownloadResource() { Url = url };
+            var res = await _dataDownloader.Download(resource);
+            var resString = res.DownloadedData.AsAnsiString();
+            var match = Regex.Match(resString, @"get\('(\w+)'\)\.innerHTML\s+=\s+'([^']*)'");
+            if (!match.Success)
+            {
+                return false;
+            }
+
+            var divId = match.Groups[1].Value;
+            var newHtml = match.Groups[2].Value.Replace(@"\""", @"""");
+            var replaceDiv = doc.QuerySelector($"#{divId}");
+            if (replaceDiv == null)
+            {
+                return false;
+            }
+            replaceDiv.InnerHtml = newHtml;
+            votingDiv.QuerySelector("span[id*='spanpollaction']")?.Remove();
+
+            Console.WriteLine(res.DownloadedData.AsAnsiString());
+            return true;
+        }
+
+        public async Task FixPage(DataDownloaderResult downloadedDiaryPost)
+        {
             if (string.IsNullOrEmpty(downloadedDiaryPost.Resource.RelativePath))
             {
                 return;
             }
 
-
             var src = downloadedDiaryPost.DownloadedData.AsAnsiString();
             var doc = _parser.Parse(src);
+
+            var rewrite = false;
+            rewrite = rewrite || await FixMore(doc);
+            rewrite = rewrite || await FixVoting(doc);
+
+            if (rewrite)
+            {
+                var filePath = Path.Combine(_diaryDir, downloadedDiaryPost.Resource.RelativePath);
+                using (var sw = new StreamWriter(File.Open(filePath, FileMode.Create), Encoding.GetEncoding(1251)))
+                {
+                    doc.ToHtml(sw, XmlMarkupFormatter.Instance);
+                }
+            }
+        }
+        protected async Task<bool> FixMore(IHtmlDocument doc)
+        {
+            await DetectMoreType();
+            if (this._moreType == DiaryMoreLinksType.Preloaded)
+            {
+                return false;
+            }
+
             var moreLinks = doc.QuerySelectorAll("a.LinkMore");
 
             var actualLinks = (from moreLink in moreLinks
@@ -52,7 +114,7 @@ namespace DiaryScraperCore
 
             if (actualLinks.Count <= 0)
             {
-                return;
+                return false;
             }
 
             if (_moreType == DiaryMoreLinksType.OnDemand)
@@ -147,11 +209,7 @@ namespace DiaryScraperCore
                 }
             }
 
-            var filePath = Path.Combine(_diaryDir, downloadedDiaryPost.Resource.RelativePath);
-            using (var sw = new StreamWriter(File.Open(filePath, FileMode.Create), Encoding.GetEncoding(1251)))
-            {
-                doc.ToHtml(sw, XmlMarkupFormatter.Instance);
-            }
+            return true;
         }
 
         private async Task DetectMoreType()
