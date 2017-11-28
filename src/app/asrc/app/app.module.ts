@@ -18,7 +18,8 @@ import {
   MatIconModule,
   MatCheckboxModule,
   MatDatepickerModule,
-  MatProgressBarModule
+  MatProgressBarModule,
+  MatMenuModule
 
 } from '@angular/material';
 import { AppRoutingModule } from './app-routing.module';
@@ -26,6 +27,7 @@ import { DiaryProgressComponent } from './diary-progress.component';
 import { DataService } from '../services/data.service';
 import { ScrapeTaskService } from '../services/scrape-task-service';
 import { HttpClientModule } from '@angular/common/http';
+import { AppStateService } from '../services/appstate.service';
 
 
 
@@ -53,9 +55,10 @@ import { HttpClientModule } from '@angular/common/http';
     MatMomentDateModule,
     AppRoutingModule,
     HttpClientModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatMenuModule
   ],
-  providers: [DataService, ScrapeTaskService],
+  providers: [DataService, ScrapeTaskService, AppStateService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

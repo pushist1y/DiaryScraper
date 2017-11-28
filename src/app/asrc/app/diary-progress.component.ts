@@ -8,6 +8,8 @@ import { ScrapeTaskDescriptor } from '../common/scrape-task-descriptor';
 import { Observable, Subscription } from 'rxjs/Rx';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as moment from 'moment';
+import { ApplicationState } from '../common/app-state';
+import { AppStateService } from '../services/appstate.service';
 
 @Component({
   selector: 'app-diary-progress',
@@ -25,6 +27,7 @@ export class DiaryProgressComponent implements OnInit {
   private inputData: DiaryScraperInputData;
   constructor(private dataService: DataService,
     private router: Router,
+    private appStateService: AppStateService,
     private scrapeService: ScrapeTaskService) {
     this.progressModel = new ProgressModel();
   }
@@ -130,12 +133,31 @@ export class DiaryProgressComponent implements OnInit {
     console.log("cancel clicked");
     this.cancelTask();
   }
-
+ 
+  private subscriptions: Array<Subscription> = new Array<Subscription>();
+  private appState: ApplicationState = new ApplicationState();
+  
   ngOnInit() {
+    var sub = this.dataService.currentData.subscribe(inputaData => this.inputData = inputaData);
+    this.subscriptions.push(sub);
 
-    this.dataService.currentData.subscribe(inputData => this.inputData = inputData);
+    sub = this.appStateService.currentState.subscribe(newState => this.appState = newState);
+    this.subscriptions.push(sub);
+
+    this.appState.menuEnabled = false;
+    this.appState.title = 'Выгрузка дневников';
+    this.appStateService.changeState(this.appState);
+    
     this.startWork();
+  }
 
+  ngOnDestroy() {
+    if (!this.subscriptions) {
+      return;
+    }
+    this.subscriptions.forEach((sub) => {
+      sub.unsubscribe();
+    })
   }
 
 }

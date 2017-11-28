@@ -10,6 +10,9 @@ import { Router } from '@angular/router';
 import { slideInDownAnimation } from './animations';
 import { DiaryScraperInputData } from '../common/diary-scraper-input-data';
 import { DataService } from '../services/data.service';
+import { AppStateService } from '../services/appstate.service';
+import { Subscription } from 'rxjs';
+import { ApplicationState } from '../common/app-state';
 
 declare var electron: Electron.AllElectron;
 
@@ -41,8 +44,11 @@ export const RU_FORMATS = {
 })
 export class DiaryInputComponent implements OnInit {
 
-  constructor(private adapter: DateAdapter<any>, private location: Location,
-    private router: Router, private dataService: DataService) {
+  constructor(private adapter: DateAdapter<any>,
+    private location: Location,
+    private router: Router,
+    private dataService: DataService,
+    private appStateService: AppStateService) {
     this.adapter.setLocale("ru");
   }
 
@@ -50,8 +56,28 @@ export class DiaryInputComponent implements OnInit {
   @HostBinding('style.display') display = 'block';
   // @HostBinding('style.position') position = 'absolute';
 
+  private subscriptions: Array<Subscription> = new Array<Subscription>();
+  private appState: ApplicationState = new ApplicationState();
+  
   ngOnInit() {
-    this.dataService.currentData.subscribe(inputaData => this.inputData = inputaData);
+    var sub = this.dataService.currentData.subscribe(inputaData => this.inputData = inputaData);
+    this.subscriptions.push(sub);
+
+    sub = this.appStateService.currentState.subscribe(newState => this.appState = newState);
+    this.subscriptions.push(sub);
+
+    this.appState.menuEnabled = true;
+    this.appState.title = 'Выгрузка дневников';
+    this.appStateService.changeState(this.appState);
+  }
+
+  ngOnDestroy() {
+    if (!this.subscriptions) {
+      return;
+    }
+    this.subscriptions.forEach((sub) => {
+      sub.unsubscribe();
+    })
   }
 
   inputData: DiaryScraperInputData;
