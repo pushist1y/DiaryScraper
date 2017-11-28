@@ -249,7 +249,7 @@ namespace DiaryScraperCore
 
             var enc1251 = Encoding.GetEncoding(1251);
             var html = enc1251.GetString(downloadResult.DownloadedData);
-            await _moreFixer.FixMore(downloadResult);
+            await _moreFixer.FixPage(downloadResult);
 
             var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))", RegexOptions.IgnoreCase);
             var imageUrls = matches.Select(m2 => m2.Groups[1].Value).ToList();
