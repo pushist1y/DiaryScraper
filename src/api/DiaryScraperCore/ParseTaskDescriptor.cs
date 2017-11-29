@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,23 +16,39 @@ namespace DiaryScraperCore
         [JsonIgnore]
         public DiaryParser Parser { get; set; }
 
-        public DiaryParserProgress Progress { get; set; }
+        public DiaryParserProgress Progress => Parser?.Progress;
 
         public override string Error => Progress?.Error ?? _error;
 
     }
 
-    
 
-    public class DiaryParserProgress
+
+    public class DiaryParserProgress : TaskProgress
     {
-        public int PostsDiscovered { get; set; }
-        public int PostsProcessed { get; set; }
-        public string CurrentPost { get; set; }
-        public string Error { get; set; }
+        public override int Percent
+        {
+            get
+            {
+                var disc = GetValue<int>(ParseProgressNames.PostsDiscovered);
+                var proc = GetValue<int>(ParseProgressNames.PostsProcessed);
+                if (disc == 0)
+                {
+                    return RangeDiscovered ? 100 : 0;
+                }
+                return Convert.ToInt32(100.0 * proc / disc);
+            }
+        }
+
+        public DiaryParserProgress()
+        {
+            Values[ParseProgressNames.CurrentFile] = "";
+            Values[ParseProgressNames.PostsDiscovered] = 0;
+            Values[ParseProgressNames.PostsProcessed] = 0;
+        }
     }
 
-    
 
-    
+
+
 }

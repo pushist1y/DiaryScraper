@@ -32,13 +32,23 @@ namespace DiaryScraperCore
         [HttpGet("{id}")]
         public IActionResult Get(string id)
         {
-            return Ok();
+            var task = _taskRunner.TasksView.FirstOrDefault(t => t.GuidString == id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+            return Json(task);
         }
 
         [HttpDelete]
         public IActionResult Delete(string id)
         {
-            return Ok();
+            var task = _taskRunner.RemoveTask(id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+            return Json(task);
         }
 
         [HttpGet("new")]

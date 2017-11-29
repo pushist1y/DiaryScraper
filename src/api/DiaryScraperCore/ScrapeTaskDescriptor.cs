@@ -17,7 +17,6 @@ namespace DiaryScraperCore
         public string DiaryUrl { get; set; }
         public override string Error => Progress?.Error ?? _error;
 
-
         [JsonIgnore]
         public override Task InnerTask => Scraper?.Worker;
         [JsonIgnore]
@@ -41,8 +40,6 @@ namespace DiaryScraperCore
                 }
             }
         }
-
-
     }
 
     public abstract class TaskProgress

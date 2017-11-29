@@ -110,7 +110,8 @@ namespace DiaryScraperCore
 
             var filePaths = new List<string>();
             filePaths.AddRange(Directory.GetFiles(postsDir));
-            Progress.PostsDiscovered = filePaths.Count;
+            Progress.Values[ParseProgressNames.PostsDiscovered] = filePaths.Count;
+            Progress.RangeDiscovered = true;
             var i = 0;
             while (filePaths.Count > 0)
             {
@@ -140,7 +141,8 @@ namespace DiaryScraperCore
                 var postDiv = doc.QuerySelector("div.singlePost");
                 if (postDiv == null)
                 {
-                    Console.WriteLine("Hidden post:" + fPath);
+                    Console.WriteLine("Hidden post: " + fPath);
+                    Progress.IncrementInt(ParseProgressNames.PostsProcessed, 1);
                     continue;
                 }
 
@@ -165,7 +167,7 @@ namespace DiaryScraperCore
                     postDto.Comments.Add(commentDto);
                 }
                 posts.Add(postDto);
-                Progress.PostsProcessed += 1;
+                Progress.IncrementInt(ParseProgressNames.PostsProcessed, 1);
             }
 
             var jsonStr = JsonConvert.SerializeObject(posts, new JsonSerializerSettings

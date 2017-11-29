@@ -29,6 +29,20 @@ namespace DiaryScraperCore
             parser?.Run();
         }
 
+        public ParseTaskDescriptor RemoveTask(string guidString)
+        {
+            var task = _tasks.FirstOrDefault(t => t.GuidString == guidString);
+
+            if (task == null)
+            {
+                return null;
+            }
+
+            task.TokenSource.Cancel();
+            task.InnerTask.Wait();
+            return task;
+        }
+
 
     }
     public class TaskRunner

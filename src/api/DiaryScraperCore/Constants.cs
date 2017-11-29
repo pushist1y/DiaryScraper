@@ -18,4 +18,11 @@ namespace DiaryScraperCore
         public const string DatePagesProcessed = "Дат обработано";
 
     }
+
+    public static class ParseProgressNames
+    {
+        public const string PostsDiscovered = "Постов обнаружено";
+        public const string PostsProcessed = "Постов обработано";
+        public const string CurrentFile = "Текущий файл";
+    }
 }
