@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,7 @@ namespace DiaryScraperCore
         public ScrapeTaskProgress Progress => Scraper?.Progress;
         public string DiaryUrl { get; set; }
         public override string Error => Progress?.Error ?? _error;
-        public bool IsRunning => (InnerTask == null) || (int)InnerTask.Status < 5;
+
 
         [JsonIgnore]
         public override Task InnerTask => Scraper?.Worker;
@@ -44,37 +45,85 @@ namespace DiaryScraperCore
 
     }
 
-
-    public class ScrapeTaskProgress
+    public abstract class TaskProgress
     {
-        public string CurrentUrl { get; set; }
-        public long PagesDownloaded { get; set; }
-        public long ImagesDownloaded { get; set; }
-        public long BytesDownloaded { get; set; }
-        public DateTime LastUpdated { get; set; }
-        public DateTime StartedAt { get; set; }
-        public int DatePagesDiscovered { get; set; }
-        public int DatePagesProcessed { get; set; }
+        public abstract int Percent { get; }
+        public bool RangeDiscovered { get; set; }
+        [JsonIgnore]
         public string Error { get; set; }
+        public Dictionary<string, object> Values { get; set; } = new Dictionary<string, object>();
+        public T GetValue<T>(string name)
+        {
+            if (!Values.TryGetValue(name, out var val))
+            {
+                return default(T);
+            }
+            return (T)Convert.ChangeType(val, typeof(T));
+        }
+
+        public void IncrementInt(string name, long addValue)
+        {
+            if (Values.TryGetValue(name, out var val))
+            {
+                var intVal = Convert.ToInt32(val);
+                Values[name] = intVal + addValue;
+            }
+            else
+            {
+                Values[name] = addValue;
+            }
+        }
+
+        public void SetValue<T>(string name, T val)
+        {
+            Values[name] = val;
+        }
+
+    }
+
+    public class ScrapeTaskProgress : TaskProgress
+    {
+        public override int Percent
+        {
+            get
+            {
+                var disc = GetValue<int>(ScrapeProgressNames.DatePagesDiscovered);
+                var proc = GetValue<int>(ScrapeProgressNames.DatePagesProcessed);
+                if (disc == 0)
+                {
+                    return RangeDiscovered ? 100 : 0;
+                }
+                return Convert.ToInt32(100.0 * proc / disc);
+            }
+        }
+
+        public ScrapeTaskProgress()
+        {
+            Values[ScrapeProgressNames.CurrentUrl] = "";
+            Values[ScrapeProgressNames.BytesDownloaded] = 0;
+            Values[ScrapeProgressNames.PagesDownloaded] = 0;
+            Values[ScrapeProgressNames.ImagesDownloaded] = 0;
+            Values[ScrapeProgressNames.DatePagesDiscovered] = 0;
+            Values[ScrapeProgressNames.DatePagesProcessed] = 0;
+        }
+
 
         public void PageDownloaded(byte[] data)
         {
-            BytesDownloaded += data.Length;
-            PagesDownloaded += 1;
+            IncrementInt(ScrapeProgressNames.BytesDownloaded, data.Length);
+            IncrementInt(ScrapeProgressNames.PagesDownloaded, 1);
         }
 
         public void PageDownloaded(string html)
         {
-            BytesDownloaded += System.Text.Encoding.ASCII.GetByteCount(html);
-            PagesDownloaded += 1;
-            LastUpdated = DateTime.Now;
+            IncrementInt(ScrapeProgressNames.BytesDownloaded, System.Text.Encoding.ASCII.GetByteCount(html));
+            IncrementInt(ScrapeProgressNames.PagesDownloaded, 1);
         }
 
         public void ImageDownloaded(byte[] data)
         {
-            BytesDownloaded += data.Length;
-            ImagesDownloaded += 1;
-            LastUpdated = DateTime.Now;
+            IncrementInt(ScrapeProgressNames.BytesDownloaded, data.Length);
+            IncrementInt(ScrapeProgressNames.ImagesDownloaded, 1);
         }
     }
 }

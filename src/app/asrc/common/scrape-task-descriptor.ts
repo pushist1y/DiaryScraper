@@ -1,19 +1,8 @@
 import * as moment from 'moment';
 
-export interface IScrapeTaskDescriptor {
-    workingDir?: string;
-    guidString?: string;
-    diaryUrl?: string;
-    scrapeStart?: moment.Moment;
-    scrapeEnd?: moment.Moment;
-    overwrite?: boolean;
-    requestDelay?: number;
-    progress?: IScrapeTaskProgress;
-    error?: string;
-    status?: number;
-}
 
-export class ScrapeTaskDescriptor implements IScrapeTaskDescriptor {
+
+export class ScrapeTaskDescriptor {
     public workingDir: string;
     public guidString: string;
     public diaryUrl: string;
@@ -21,25 +10,18 @@ export class ScrapeTaskDescriptor implements IScrapeTaskDescriptor {
     public scrapeEnd: moment.Moment;
     public overwrite: boolean;
     public requestDelay: number;
-    public progress: ScrapeTaskProgress;
+    public progress: TaskProgress;
     public error: string;
     public status: number;
 }
 
-export interface IScrapeTaskProgress {
-    currentUrl: string;
-    pagesDownloaded: number;
-    imagesDownloaded: number;
-    bytesDownloaded: number;
-    datePagesDiscovered: number;
-    datePagesProcessed: number;
+
+
+export class TaskProgress {
+    percent: number;
+    values: StringDictionary;
 }
 
-export class ScrapeTaskProgress implements IScrapeTaskProgress {
-    currentUrl: string;
-    pagesDownloaded: number;
-    imagesDownloaded: number;
-    bytesDownloaded: number;
-    datePagesDiscovered: number;
-    datePagesProcessed: number;
+export interface StringDictionary {
+    [key: string]: number|string;
 }

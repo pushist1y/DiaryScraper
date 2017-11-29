@@ -45,7 +45,7 @@ namespace DiaryScraperCore
             {
                 if (!(e.Resource is DiaryImage))
                 {
-                    Progress.CurrentUrl = e.Resource.Url.ToLower();
+                    Progress.Values[ScrapeProgressNames.CurrentUrl] = e.Resource.Url.ToLower();
                 }
             };
 
@@ -117,7 +117,8 @@ namespace DiaryScraperCore
 
             cancellationToken.ThrowIfCancellationRequested();
             var dateUrls = GetDateUrls(cancellationToken);
-            Progress.DatePagesDiscovered = dateUrls.Count;
+            Progress.Values[ScrapeProgressNames.DatePagesDiscovered] = dateUrls.Count;
+            Progress.RangeDiscovered = true;
 
             ScanDateUrlsAsync(dateUrls, cancellationToken).Wait();
 
@@ -230,7 +231,7 @@ namespace DiaryScraperCore
                     await DownloadPostAsync("http://" + m.Groups[1].Value, datePage.PostDate);
                 }
 
-                Progress.DatePagesProcessed += 1;
+                Progress.IncrementInt(ScrapeProgressNames.DatePagesProcessed, 1);
                 await _downloadExistingChecker.AddProcessedDataAsync(datePage);
             }
             return true;

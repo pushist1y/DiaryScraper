@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DiaryScraperCore
@@ -19,7 +20,13 @@ namespace DiaryScraperCore
         [HttpPost]
         public IActionResult Post([FromBody] ParseTaskDescriptor descriptor)
         {
-            return Ok();
+           if (_taskRunner.TasksView.Any(t => t.IsRunning))
+            {
+                descriptor.SetError("Операция по скачиванию дневника уже выполняется");
+                return Json(descriptor);
+            }
+            _taskRunner.AddTask(descriptor);
+            return Json(descriptor);
         }
 
         [HttpGet("{id}")]

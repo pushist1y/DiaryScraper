@@ -30,6 +30,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { AppStateService } from '../services/appstate.service';
 import { DiaryParseInputComponent } from './diary-parse-input.component';
 import { ParseInputDataService } from '../services/parse-input-service';
+import { ValuesPipe } from '../services/values-pipe';
 
 
 
@@ -39,7 +40,8 @@ import { ParseInputDataService } from '../services/parse-input-service';
     DiaryInputComponent,
     MomentValidateExactDirective,
     DiaryProgressComponent,
-    DiaryParseInputComponent
+    DiaryParseInputComponent,
+    ValuesPipe
   ],
   imports: [
     BrowserModule,

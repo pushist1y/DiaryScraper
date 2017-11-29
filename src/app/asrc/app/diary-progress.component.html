@@ -14,51 +14,25 @@
     <div fxFlex="3">
     </div>
     <div fxFlex class="progressBar">
-      <div>{{progressModel.progressValue}}%</div>
-      <mat-progress-bar mode="determinate" [value]="progressModel.progressValue"></mat-progress-bar>
+      <div>{{progressModel.currentTask?.progress?.percent}}%</div>
+      <mat-progress-bar mode="determinate" [value]="progressModel.currentTask?.progress?.percent"></mat-progress-bar>
     </div>
     <div fxFlex="3">
     </div>
   </div>
 
-  <div fxLayout="row" fxFlexFill>
-    
-        <div fxFlex="50" class="colName">
-          Текущая страница:
-        </div>
-        <div fxFlex="50" class="colValue">
-          {{progressModel.currentTask?.progress?.currentUrl}}
-        </div>
-      </div>
-
-  <div fxLayout="row" fxFlexFill>
+  <div fxLayout="row" fxFlexFill *ngFor="let progressItem of progressModel.currentTask?.progress?.values | values">
 
     <div fxFlex="50" class="colName">
-      Страниц скачано:
+      {{progressItem.key}}:
     </div>
     <div fxFlex="50" class="colValue">
-      {{progressModel.currentTask?.progress?.pagesDownloaded}}
+      {{progressItem.value}}
     </div>
   </div>
 
-  <div fxLayout="row" fxFlexFill>
-
-    <div fxFlex="50" class="colName">
-      Изображений скачано:
-    </div>
-    <div fxFlex="50" class="colValue">
-      {{progressModel.currentTask?.progress?.imagesDownloaded}}
-    </div>
-  </div>
-  <div fxLayout="row" fxFlexFill>
-
-    <div fxFlex="50" class="colName">
-        Байт скачано:
-    </div>
-    <div fxFlex="50" class="colValue">
-      {{progressModel.currentTask?.progress?.bytesDownloaded}}
-    </div>
-  </div>
+  
   <button mat-button color="primary" type="button" (click)="onResetClick()" *ngIf="!progressModel.inProgress && !progressModel.isCancelling">Заново</button>
-  <button mat-button color="primary" type="button" (click)="onCancelClick()" *ngIf="progressModel.inProgress || progressModel.isCancelling" [disabled]="progressModel.isCancelling">Отмена</button>
+  <button mat-button color="primary" type="button" (click)="onCancelClick()" *ngIf="progressModel.inProgress || progressModel.isCancelling"
+    [disabled]="progressModel.isCancelling">Отмена</button>
 </div>

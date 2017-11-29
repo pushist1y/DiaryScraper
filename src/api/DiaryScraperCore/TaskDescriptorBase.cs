@@ -19,6 +19,7 @@ namespace DiaryScraperCore
         public TaskStatus? Status => InnerTask?.Status;
         [JsonIgnore]
         public abstract CancellationTokenSource TokenSource { get; }
+        public bool IsRunning => (InnerTask != null) && (int)InnerTask.Status < 5;
         public void SetError(string error)
         {
             _error = error;

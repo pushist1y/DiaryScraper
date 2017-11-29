@@ -1,4 +1,4 @@
-import { Component, OnInit, HostBinding } from '@angular/core';
+import { Component, OnInit, HostBinding, Pipe, PipeTransform } from '@angular/core';
 import { slideInDownAnimation } from "./animations"
 import { DataService } from '../services/data.service';
 import { DiaryScraperInputData } from '../common/diary-scraper-input-data';
@@ -80,9 +80,7 @@ export class DiaryProgressComponent implements OnInit {
         this.updateTaskData(updatedTask);
         if ((updatedTask.status && updatedTask.status >= 5) || !!updatedTask.error) {
           this.stopProgress();
-          if (updatedTask.status && updatedTask.status == 5 && updatedTask.progress.datePagesDiscovered == 0) {
-            this.progressModel.progressValue = 100;
-          }
+
         }
       }, (error: HttpErrorResponse) => {
         this.stopProgress();
@@ -92,9 +90,6 @@ export class DiaryProgressComponent implements OnInit {
 
   updateTaskData(newTask: ScrapeTaskDescriptor) {
     this.progressModel.currentTask = newTask;
-    this.progressModel.progressValue = Math.round(newTask.progress.datePagesDiscovered > 0
-      ? 100.0 * newTask.progress.datePagesProcessed / newTask.progress.datePagesDiscovered
-      : 0);
   }
 
   stopProgress() {
@@ -147,7 +142,7 @@ export class DiaryProgressComponent implements OnInit {
     this.appState.menuEnabled = false;
     this.appState.title = 'Выгрузка дневников';
     this.appStateService.changeState(this.appState);
-    
+
     this.startWork();
   }
 
@@ -161,6 +156,8 @@ export class DiaryProgressComponent implements OnInit {
   }
 
 }
+
+
 
 
 export class ProgressModel {
