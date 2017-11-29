@@ -66,7 +66,8 @@ export class DiaryParseInputComponent implements OnInit {
   }
 
   onSubmit() {
-    alert("submit");
+    this.parseInputService.changeData(this.parseInputData);
+    this.router.navigateByUrl("/parseprogress");
   }
 
 }

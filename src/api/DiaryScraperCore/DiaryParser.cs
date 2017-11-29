@@ -130,7 +130,7 @@ namespace DiaryScraperCore
             var posts = new List<DiaryPostDto>();
             foreach (var fPath in filePaths)
             {
-
+                Progress.Values[ParseProgressNames.CurrentFile] = Path.GetFileName(fPath);
                 var postDto = new DiaryPostDto();
                 IHtmlDocument doc;
                 using (var sr = new StreamReader(File.Open(fPath, FileMode.Open), Encoding.GetEncoding(1251)))

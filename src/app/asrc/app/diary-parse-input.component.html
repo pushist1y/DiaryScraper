@@ -1,11 +1,12 @@
 <form class="formWrapper" #diaryParserInputForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
 
   <mat-form-field>
-    <input matInput placeholder="Рабочая папка" readonly [(ngModel)]="parseInputData.diaryDir" #diaryDirFormControl="ngModel"
+    <input matInput placeholder="Папка с дневником" readonly [(ngModel)]="parseInputData.diaryDir" #diaryDirFormControl="ngModel"
       name="diaryDirInput" id="diaryDirInput" required>
     <button mat-button matSuffix mat-icon-button type="button" (click)="onDiaryDirectoryButtonClick(diaryDirFormControl)">
       <mat-icon>folder_open</mat-icon>
     </button>
+    <mat-hint>Папка, в которой находится файл <strong>scrape.db</strong></mat-hint>
     <mat-error *ngIf="diaryDirFormControl.hasError('required')">
       Необходимо указать папку с дневником
     </mat-error>

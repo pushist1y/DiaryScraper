@@ -31,6 +31,8 @@ import { AppStateService } from '../services/appstate.service';
 import { DiaryParseInputComponent } from './diary-parse-input.component';
 import { ParseInputDataService } from '../services/parse-input-service';
 import { ValuesPipe } from '../services/values-pipe';
+import { DiaryParseProgressComponent } from './diary-parse-progress.component';
+import { ParseTaskService } from '../services/parse-task-service';
 
 
 
@@ -41,7 +43,8 @@ import { ValuesPipe } from '../services/values-pipe';
     MomentValidateExactDirective,
     DiaryProgressComponent,
     DiaryParseInputComponent,
-    ValuesPipe
+    ValuesPipe,
+    DiaryParseProgressComponent
   ],
   imports: [
     BrowserModule,
@@ -63,7 +66,13 @@ import { ValuesPipe } from '../services/values-pipe';
     MatProgressBarModule,
     MatMenuModule
   ],
-  providers: [DataService, ScrapeTaskService, AppStateService, ParseInputDataService],
+  providers: [
+    DataService,
+    ScrapeTaskService,
+    AppStateService,
+    ParseInputDataService,
+    ParseTaskService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

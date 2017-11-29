@@ -8,17 +8,17 @@
       </button>
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="scrapeClick()">
-          <mat-icon>dialpad</mat-icon>
+          <mat-icon>file_download</mat-icon>
           <span>Выгрузка</span>
         </button>
         <button mat-menu-item (click)="parseClick()">
-          <mat-icon>voicemail</mat-icon>
+          <mat-icon>fast_forward</mat-icon>
           <span>Обработка</span>
         </button>
       </mat-menu>
     </div>
   </div>
-  <div fxFlex>
+  <div fxFlex fxFlexOffset="5">
     <h1>
       {{appState.title}}
     </h1>

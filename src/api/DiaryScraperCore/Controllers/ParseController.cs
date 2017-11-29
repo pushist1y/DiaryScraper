@@ -40,7 +40,7 @@ namespace DiaryScraperCore
             return Json(task);
         }
 
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public IActionResult Delete(string id)
         {
             var task = _taskRunner.RemoveTask(id);

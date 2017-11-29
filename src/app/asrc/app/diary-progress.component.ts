@@ -21,7 +21,6 @@ import { AppStateService } from '../services/appstate.service';
 export class DiaryProgressComponent implements OnInit {
   @HostBinding('@routeAnimation') routeAnimation = true;
   @HostBinding('style.display') display = 'block';
-  // @HostBinding('style.position') position = 'absolute';
 
 
   private inputData: DiaryScraperInputData;
@@ -128,10 +127,10 @@ export class DiaryProgressComponent implements OnInit {
     console.log("cancel clicked");
     this.cancelTask();
   }
- 
+
   private subscriptions: Array<Subscription> = new Array<Subscription>();
   private appState: ApplicationState = new ApplicationState();
-  
+
   ngOnInit() {
     var sub = this.dataService.currentData.subscribe(inputaData => this.inputData = inputaData);
     this.subscriptions.push(sub);
@@ -152,19 +151,24 @@ export class DiaryProgressComponent implements OnInit {
     }
     this.subscriptions.forEach((sub) => {
       sub.unsubscribe();
-    })
+    });
+    if(this.progressModel.subscription)
+    {
+      this.progressModel.subscription.unsubscribe();
+      this.progressModel.subscription = null;
+    }
   }
 
 }
 
 
-
-
-export class ProgressModel {
-  currentTask: ScrapeTaskDescriptor;
-  progressValue: number = 0;
+export class ProgressModelBase {
   inProgress: boolean = false;
   scheduler: Observable<number>;
   subscription: Subscription;
   isCancelling: boolean = false;;
+}
+
+class ProgressModel extends ProgressModelBase {
+  currentTask: ScrapeTaskDescriptor;
 }
