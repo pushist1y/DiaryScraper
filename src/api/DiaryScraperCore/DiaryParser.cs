@@ -124,7 +124,7 @@ namespace DiaryScraperCore
 
         private async Task ParsePostsPortion(int portionIndex, IEnumerable<string> filePaths, CancellationToken cancellationToken)
         {
-            var filePath = $"posts_{portionIndex:D3}.json";
+            var filePath = $"posts_{portionIndex:D5}.json";
             filePath = Path.Combine(_parsedDir, filePath);
 
             var posts = new List<DiaryPostDto>();
@@ -207,10 +207,10 @@ namespace DiaryScraperCore
                 if (docEdit != null)
                 {
                     var checkedAccess = docEdit.QuerySelector("input[type='radio'][id*='closeaccessmode']:checked");
-                    postDto.Access = (checkedAccess == null) ? 0 : Convert.ToInt32(checkedAccess.GetAttribute("value"));
+                    postDto.Access = (checkedAccess == null) ? "0" : checkedAccess.GetAttribute("value");
 
                     var checkNoComment = docEdit.QuerySelector("input#nocomm");
-                    postDto.NoComments = (checkNoComment == null || !checkNoComment.HasAttribute("checked")) ? 0 : 1;
+                    postDto.NoComments = (checkNoComment == null || !checkNoComment.HasAttribute("checked")) ? "0" : "1";
 
                     var accessListText = docEdit.QuerySelector("textarea#access_list2").TextContent;
                     if (!string.IsNullOrEmpty(accessListText))
@@ -221,10 +221,10 @@ namespace DiaryScraperCore
                 else
                 {
                     var lockImg = postDiv.QuerySelector(".postTitle h2 img[alt='lock']");
-                    postDto.Access = (lockImg == null) ? 0 : 7;
+                    postDto.Access = (lockImg == null) ? "0" : "7";
 
                     var subscribeEl = doc.QuerySelector("li.subscribe");
-                    postDto.NoComments = (subscribeEl == null) ? 1 : 0;
+                    postDto.NoComments = (subscribeEl == null) ? "1" : "0";
                 }
 
 
@@ -261,8 +261,8 @@ namespace DiaryScraperCore
         public string AuthorUsername { get; set; }
         public List<string> Tags { get; set; } = new List<string>();
         [JsonProperty("no_comments")]
-        public int NoComments { get; set; }
-        public int Access { get; set; }
+        public string NoComments { get; set; }
+        public string Access { get; set; }
         public string Title { get; set; }
         [JsonProperty("message_html")]
         public string MessageHtml { get; set; }
