@@ -27,8 +27,8 @@ export class DiaryParseProgressComponent implements OnInit {
 
   private subscriptions: Array<Subscription> = new Array<Subscription>();
   private appState: ApplicationState = new ApplicationState();
-  private progressModel: ProgressModel = new ProgressModel();
-  private parseInputData: DiaryParserInputData;
+  progressModel: ProgressModel = new ProgressModel();
+  parseInputData: DiaryParserInputData;
 
   ngOnInit() {
 

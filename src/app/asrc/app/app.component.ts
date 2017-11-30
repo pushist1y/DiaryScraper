@@ -17,7 +17,7 @@ export class AppComponent {
 
   }
 
-  private appState: ApplicationState = new ApplicationState();
+  appState: ApplicationState = new ApplicationState();
 
   ngOnInit() {
     this.appStateService.currentState.subscribe(appState => setTimeout(() => {

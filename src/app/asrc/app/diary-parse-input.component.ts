@@ -32,7 +32,7 @@ export class DiaryParseInputComponent implements OnInit {
 
   private subscriptions: Array<Subscription> = new Array<Subscription>();
   private appState: ApplicationState = new ApplicationState();
-  private parseInputData: DiaryParserInputData = new DiaryParserInputData();
+  parseInputData: DiaryParserInputData = new DiaryParserInputData();
 
   ngOnInit() {
     var sub = this.parseInputService.currentData.subscribe(newParseData => this.parseInputData = newParseData);
