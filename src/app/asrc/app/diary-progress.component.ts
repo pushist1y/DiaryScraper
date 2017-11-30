@@ -1,4 +1,4 @@
-import { Component, OnInit, HostBinding } from '@angular/core';
+import { Component, OnInit, HostBinding, Pipe, PipeTransform } from '@angular/core';
 import { slideInDownAnimation } from "./animations"
 import { DataService } from '../services/data.service';
 import { DiaryScraperInputData } from '../common/diary-scraper-input-data';
@@ -8,6 +8,8 @@ import { ScrapeTaskDescriptor } from '../common/scrape-task-descriptor';
 import { Observable, Subscription } from 'rxjs/Rx';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as moment from 'moment';
+import { ApplicationState } from '../common/app-state';
+import { AppStateService } from '../services/appstate.service';
 
 @Component({
   selector: 'app-diary-progress',
@@ -19,12 +21,12 @@ import * as moment from 'moment';
 export class DiaryProgressComponent implements OnInit {
   @HostBinding('@routeAnimation') routeAnimation = true;
   @HostBinding('style.display') display = 'block';
-  // @HostBinding('style.position') position = 'absolute';
 
 
   private inputData: DiaryScraperInputData;
   constructor(private dataService: DataService,
     private router: Router,
+    private appStateService: AppStateService,
     private scrapeService: ScrapeTaskService) {
     this.progressModel = new ProgressModel();
   }
@@ -38,6 +40,7 @@ export class DiaryProgressComponent implements OnInit {
     newTask.diaryUrl = `http://${this.inputData.diaryAddress}.diary.ru`;
     newTask.workingDir = this.inputData.workingDir;
     newTask.overwrite = this.inputData.overwrite;
+    newTask.downloadEdits = this.inputData.downloadEdits;
     newTask.requestDelay = this.inputData.requestDelay;
     if (this.inputData.dateStart.enabled) {
       newTask.scrapeStart = moment(this.inputData.dateStart.value).utc().subtract(new Date().getTimezoneOffset(), 'm');
@@ -77,9 +80,7 @@ export class DiaryProgressComponent implements OnInit {
         this.updateTaskData(updatedTask);
         if ((updatedTask.status && updatedTask.status >= 5) || !!updatedTask.error) {
           this.stopProgress();
-          if (updatedTask.status && updatedTask.status == 5 && updatedTask.progress.datePagesDiscovered == 0) {
-            this.progressModel.progressValue = 100;
-          }
+
         }
       }, (error: HttpErrorResponse) => {
         this.stopProgress();
@@ -89,9 +90,6 @@ export class DiaryProgressComponent implements OnInit {
 
   updateTaskData(newTask: ScrapeTaskDescriptor) {
     this.progressModel.currentTask = newTask;
-    this.progressModel.progressValue = Math.round(newTask.progress.datePagesDiscovered > 0
-      ? 100.0 * newTask.progress.datePagesProcessed / newTask.progress.datePagesDiscovered
-      : 0);
   }
 
   stopProgress() {
@@ -131,21 +129,47 @@ export class DiaryProgressComponent implements OnInit {
     this.cancelTask();
   }
 
+  private subscriptions: Array<Subscription> = new Array<Subscription>();
+  private appState: ApplicationState = new ApplicationState();
+
   ngOnInit() {
+    var sub = this.dataService.currentData.subscribe(inputaData => this.inputData = inputaData);
+    this.subscriptions.push(sub);
 
-    this.dataService.currentData.subscribe(inputData => this.inputData = inputData);
+    sub = this.appStateService.currentState.subscribe(newState => this.appState = newState);
+    this.subscriptions.push(sub);
+
+    this.appState.menuEnabled = false;
+    this.appState.title = 'Выгрузка дневников';
+    this.appStateService.changeState(this.appState);
+
     this.startWork();
+  }
 
+  ngOnDestroy() {
+    if (!this.subscriptions) {
+      return;
+    }
+    this.subscriptions.forEach((sub) => {
+      sub.unsubscribe();
+    });
+    if(this.progressModel.subscription)
+    {
+      this.progressModel.subscription.unsubscribe();
+      this.progressModel.subscription = null;
+    }
   }
 
 }
 
 
-export class ProgressModel {
-  currentTask: ScrapeTaskDescriptor;
-  progressValue: number = 0;
+export class ProgressModelBase {
   inProgress: boolean = false;
   scheduler: Observable<number>;
   subscription: Subscription;
   isCancelling: boolean = false;;
+}
+
+class ProgressModel extends ProgressModelBase {
+  currentTask: ScrapeTaskDescriptor;
 }

@@ -1,5 +1,8 @@
 import { Component } from '@angular/core';
 import { slideInDownAnimation } from './animations';
+import { AppStateService } from '../services/appstate.service';
+import { ApplicationState } from '../common/app-state';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -8,5 +11,30 @@ import { slideInDownAnimation } from './animations';
   animations: [slideInDownAnimation]
 })
 export class AppComponent {
-  title = 'Выгрузка дневников';
+
+  constructor(private appStateService: AppStateService,
+    private router: Router) {
+
+  }
+
+  private appState: ApplicationState = new ApplicationState();
+
+  ngOnInit() {
+    this.appStateService.currentState.subscribe(appState => setTimeout(() => {
+      this.appState.menuEnabled = appState.menuEnabled;
+      this.appState.title = appState.title;
+    }, 0));
+    let appState = new ApplicationState();
+    appState.title = 'Выгрузка дневников';
+    appState.menuEnabled = true;
+    this.appStateService.changeState(appState);
+  }
+
+  scrapeClick() {
+    this.router.navigateByUrl("/input");
+  }
+
+  parseClick() {
+    this.router.navigateByUrl("/parse");
+  }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { IScrapeTaskDescriptor, ScrapeTaskDescriptor } from "../common/scrape-task-descriptor";
+import { ScrapeTaskDescriptor } from "../common/scrape-task-descriptor";
 import { Observable } from "rxjs/Observable";
 
 const httpOptions = {

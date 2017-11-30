@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -10,13 +11,62 @@ using NLog.Targets;
 
 namespace DiaryScraperCore
 {
-    public class DiaryScraperFactory
+    public class WorkerFactoryBase
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<DiaryScraperFactory> _logger;
-        public DiaryScraperFactory(IServiceProvider serviceProvider, ILogger<DiaryScraperFactory> logger)
+        protected readonly IServiceProvider _serviceProvider;
+        public WorkerFactoryBase(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
+        }
+
+        protected void UnsetLog(NLogScrapeConfig config)
+        {
+            try
+            {
+                if (config.Target != null)
+                {
+                    NLog.LogManager.Configuration.RemoveTarget(config.Target.Name);
+                }
+                if (config.Rule != null)
+                {
+                    NLog.LogManager.Configuration.LoggingRules.Remove(config.Rule);
+                }
+                NLog.LogManager.ReconfigExistingLoggers();
+            }
+            catch
+            {
+                //ignore exception
+            }
+        }
+        protected NLogScrapeConfig ConfigureLog(string workingDir)
+        {
+            try
+            {
+                var cfg = new NLogScrapeConfig();
+                cfg.Target = new FileTarget();
+                cfg.Target.Name = "errorTarget_" + Guid.NewGuid().ToString("n");
+                cfg.Target.FileName = Path.Combine(workingDir, "${shortdate}.log");
+                cfg.Target.Layout = @"${date:format=dd.MM.yyyy HH\:mm\:ss} (${level:uppercase=true}): ${message}. ${exception:format=ToString}";
+                NLog.LogManager.Configuration.AddTarget(cfg.Target);
+
+                cfg.Rule = new LoggingRule("DiaryScraperCore*", NLog.LogLevel.Warn, cfg.Target);
+                NLog.LogManager.Configuration.LoggingRules.Add(cfg.Rule);
+
+                NLog.LogManager.ReconfigExistingLoggers();
+                return cfg;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+    public class DiaryScraperFactory : WorkerFactoryBase
+    {
+
+        private readonly ILogger<DiaryScraperFactory> _logger;
+        public DiaryScraperFactory(IServiceProvider serviceProvider, ILogger<DiaryScraperFactory> logger) : base(serviceProvider)
+        {
             _logger = logger;
         }
 
@@ -44,7 +94,8 @@ namespace DiaryScraperCore
                     RequestDelay = descriptor.RequestDelay,
                     ScrapeStart = descriptor.ScrapeStart,
                     ScrapeEnd = descriptor.ScrapeEnd,
-                    Overwrite = descriptor.Overwrite
+                    Overwrite = descriptor.Overwrite,
+                    DownloadEdits = descriptor.DownloadEdits
                 };
 
                 var scraper = new DiaryScraperNew(logger, context, options);
@@ -87,47 +138,7 @@ namespace DiaryScraperCore
         }
 
 
-        private void UnsetLog(NLogScrapeConfig config)
-        {
-            try
-            {
-                if (config.Target != null)
-                {
-                    NLog.LogManager.Configuration.RemoveTarget(config.Target.Name);
-                }
-                if (config.Rule != null)
-                {
-                    NLog.LogManager.Configuration.LoggingRules.Remove(config.Rule);
-                }
-                NLog.LogManager.ReconfigExistingLoggers();
-            }
-            catch
-            {
-                //ignore exception
-            }
-        }
-        private NLogScrapeConfig ConfigureLog(string workingDir)
-        {
-            try
-            {
-                var cfg = new NLogScrapeConfig();
-                cfg.Target = new FileTarget();
-                cfg.Target.Name = "errorTarget_" + Guid.NewGuid().ToString("n");
-                cfg.Target.FileName = Path.Combine(workingDir, "${shortdate}.log");
-                cfg.Target.Layout = @"${date:format=dd.MM.yyyy HH\:mm\:ss} (${level:uppercase=true}): ${message}. ${exception:format=ToString}";
-                NLog.LogManager.Configuration.AddTarget(cfg.Target);
 
-                cfg.Rule = new LoggingRule("DiaryScraperCore*", NLog.LogLevel.Warn, cfg.Target);
-                NLog.LogManager.Configuration.LoggingRules.Add(cfg.Rule);
-
-                NLog.LogManager.ReconfigExistingLoggers();
-                return cfg;
-            }
-            catch
-            {
-                return null;
-            }
-        }
 
         private void EnsureDirs(string workingDir, string diaryName)
         {
@@ -135,24 +146,40 @@ namespace DiaryScraperCore
             {
                 throw new ArgumentException($"Директория [{workingDir}] не существует");
             }
+            var dirs = new List<string>();
             var diaryDir = Path.Combine(workingDir, diaryName);
+            dirs.Add(diaryDir);
+            dirs.Add(Path.Combine(diaryDir, Constants.PostsDir));
+            dirs.Add(Path.Combine(diaryDir, Constants.ImagesDir));
+            dirs.Add(Path.Combine(diaryDir, Constants.PostEditsDir));
 
-            if (!Directory.Exists(diaryDir))
+            foreach (var dir in dirs)
             {
-                Directory.CreateDirectory(diaryDir);
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
             }
+            
+        }
+    }
 
-            var postDir = Path.Combine(diaryDir, Constants.PostsDir);
-            if (!Directory.Exists(postDir))
-            {
-                Directory.CreateDirectory(postDir);
-            }
+    public class DiaryParserFactory : WorkerFactoryBase
+    {
+        private readonly ILogger<DiaryParser> _logger;
+        public DiaryParserFactory(IServiceProvider serviceProvider, ILogger<DiaryParser> logger) : base(serviceProvider)
+        {
+            _logger = logger;
+        }
 
-            var imagesDir = Path.Combine(diaryDir, Constants.ImagesDir);
-            if (!Directory.Exists(imagesDir))
-            {
-                Directory.CreateDirectory(imagesDir);
-            }
+        public DiaryParser GetParser(ParseTaskDescriptor descriptor)
+        {
+            var options = new DiaryParserOptions();
+            options.DiaryDir = descriptor.WorkingDir;
+
+            descriptor.Parser = new DiaryParser(options, _logger);
+
+            return descriptor.Parser;
         }
     }
 

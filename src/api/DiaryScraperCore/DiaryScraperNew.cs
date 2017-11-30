@@ -7,11 +7,16 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using AngleSharp;
+using AngleSharp.Parser.Html;
+using AngleSharp.Xml;
 using Cloudflare_Bypass;
 using Microsoft.Extensions.Logging;
 
 namespace DiaryScraperCore
 {
+
+
     public class ScraperFinishedArguments
     { }
     public class DiaryScraperNew
@@ -28,6 +33,7 @@ namespace DiaryScraperCore
         private readonly DownloadExistingChecker _downloadExistingChecker;
         private readonly DataDownloader _downloader;
         private readonly DiaryMoreLinksFixer _moreFixer;
+        private readonly HtmlParser _parser;
         public DiaryScraperNew(ILogger<DiaryScraperNew> logger, ScrapeContext context, DiaryScraperOptions options)
         {
             _logger = logger;
@@ -43,12 +49,13 @@ namespace DiaryScraperCore
             {
                 if (!(e.Resource is DiaryImage))
                 {
-                    Progress.CurrentUrl = e.Resource.Url.ToLower();
+                    Progress.Values[ScrapeProgressNames.CurrentUrl] = e.Resource.Url.ToLower();
                 }
             };
 
             _downloader.AfterDownload += OnResourceDownloaded;
-            
+            var config = new Configuration().WithCss();
+            _parser = new HtmlParser(config);
             _moreFixer = new DiaryMoreLinksFixer(_downloader, _options.WorkingDir, _options.DiaryName);
         }
 
@@ -115,7 +122,8 @@ namespace DiaryScraperCore
 
             cancellationToken.ThrowIfCancellationRequested();
             var dateUrls = GetDateUrls(cancellationToken);
-            Progress.DatePagesDiscovered = dateUrls.Count;
+            Progress.Values[ScrapeProgressNames.DatePagesDiscovered] = dateUrls.Count;
+            Progress.RangeDiscovered = true;
 
             ScanDateUrlsAsync(dateUrls, cancellationToken).Wait();
 
@@ -228,7 +236,7 @@ namespace DiaryScraperCore
                     await DownloadPostAsync("http://" + m.Groups[1].Value, datePage.PostDate);
                 }
 
-                Progress.DatePagesProcessed += 1;
+                Progress.IncrementInt(ScrapeProgressNames.DatePagesProcessed, 1);
                 await _downloadExistingChecker.AddProcessedDataAsync(datePage);
             }
             return true;
@@ -246,10 +254,31 @@ namespace DiaryScraperCore
             postInfo.GenerateLocalPath(date.ToString("yyyy-MM-dd") + "-");
 
             var downloadResult = await _downloader.Download(postInfo, false, _options.RequestDelay);
+            var html = downloadResult.DownloadedData.AsAnsiString();
+            var doc = _parser.Parse(html);
 
-            var enc1251 = Encoding.GetEncoding(1251);
-            var html = enc1251.GetString(downloadResult.DownloadedData);
-            await _moreFixer.FixPage(downloadResult);
+            if (_options.DownloadEdits)
+            {
+                var editLink = doc.QuerySelector("li.editPostLink a");
+                if (editLink != null)
+                {
+                    var editUrl = editLink.GetAttribute("href");
+                    var editInfo = new DiaryPostEdit{Url = editUrl};
+                    editInfo.Post = postInfo;
+                    postInfo.PostEdit = editInfo;
+                    editInfo.GenerateLocalPath(date.ToString("yyyy-MM-dd") + "-");
+                    var editDownloadResult = await _downloader.Download(editInfo, false, _options.RequestDelay);
+                }
+            }
+
+            if (await _moreFixer.FixPage(doc) && !string.IsNullOrEmpty(downloadResult.Resource.RelativePath))
+            {
+                var filePath = Path.Combine(_options.WorkingDir, _options.DiaryName, downloadResult.Resource.RelativePath);
+                using (var sw = new StreamWriter(File.Open(filePath, FileMode.Create), Encoding.GetEncoding(1251)))
+                {
+                    doc.ToHtml(sw, XmlMarkupFormatter.Instance);
+                }
+            }
 
             var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))", RegexOptions.IgnoreCase);
             var imageUrls = matches.Select(m2 => m2.Groups[1].Value).ToList();
@@ -275,6 +304,7 @@ namespace DiaryScraperCore
         public DateTime ScrapeStart { get; set; }
         public DateTime ScrapeEnd { get; set; }
         public bool Overwrite { get; set; }
+        public bool DownloadEdits { get; set; }
 
     }
 

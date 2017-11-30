@@ -33,7 +33,7 @@ namespace DiaryScraperCore
             }
         }
 
-        public string GenerateLocalPath(string prefix)
+        public virtual string GenerateLocalPath(string prefix)
         {
             var fName = "";
             var fNameMatch = Regex.Match(Url, @"([^\/]*)$", RegexOptions.IgnoreCase);
@@ -58,6 +58,31 @@ namespace DiaryScraperCore
     {
         [NotMapped]
         public override string DirName => Constants.PostsDir;
+        public DiaryPostEdit PostEdit { get; set; }
+    }
+
+    public class DiaryPostEdit : DownloadResource
+    {
+        public int PostId { get; set; }
+        [ForeignKey("PostId")]
+        [Required]
+        public DiaryPost Post { get; set; }
+        [NotMapped]
+        public override string DirName => Constants.PostEditsDir;
+        public override string GenerateLocalPath(string prefix)
+        {
+            var fName = "";
+            if (Post == null)
+            {
+                fName = prefix + Guid.NewGuid().ToString("n") + ".htm";
+            }
+            else
+            {
+                fName = Regex.Replace(Path.GetFileName(Post.RelativePath), @"\.htm$", "_edit.htm");
+            }
+            this.LocalPath = Path.Combine(DirName, fName);
+            return this.LocalPath;
+        }
     }
 
     public class DiaryImage : DownloadResource

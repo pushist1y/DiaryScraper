@@ -72,6 +72,28 @@ namespace DiaryScraperCore.Migrations
 
                     b.HasDiscriminator().HasValue("DiaryPost");
                 });
+
+            modelBuilder.Entity("DiaryScraperCore.DiaryPostEdit", b =>
+                {
+                    b.HasBaseType("DiaryScraperCore.DownloadResource");
+
+                    b.Property<int>("PostId");
+
+                    b.HasIndex("PostId")
+                        .IsUnique();
+
+                    b.ToTable("DiaryPostEdit");
+
+                    b.HasDiscriminator().HasValue("DiaryPostEdit");
+                });
+
+            modelBuilder.Entity("DiaryScraperCore.DiaryPostEdit", b =>
+                {
+                    b.HasOne("DiaryScraperCore.DiaryPost", "Post")
+                        .WithOne("PostEdit")
+                        .HasForeignKey("DiaryScraperCore.DiaryPostEdit", "PostId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
 #pragma warning restore 612, 618
         }
     }

@@ -1,0 +1,39 @@
+<div class="progressWrapper mat-typography">
+    <div fxLayout="row" fxFlexFill>
+  
+      <div fxFlex="3">
+      </div>
+      <div fxFlex class="mat-error" style="text-align:center;" *ngIf="progressModel.currentTask?.error">
+        {{progressModel.currentTask?.error}}
+      </div>
+      <div fxFlex="3">
+      </div>
+    </div>
+    <div fxLayout="row" fxFlexFill>
+  
+      <div fxFlex="3">
+      </div>
+      <div fxFlex class="progressBar">
+        <div>{{progressModel.currentTask?.progress?.percent}}%</div>
+        <mat-progress-bar mode="determinate" [value]="progressModel.currentTask?.progress?.percent"></mat-progress-bar>
+      </div>
+      <div fxFlex="3">
+      </div>
+    </div>
+  
+    <div fxLayout="row" fxFlexFill *ngFor="let progressItem of progressModel.currentTask?.progress?.values | values">
+  
+      <div fxFlex="50" class="colName">
+        {{progressItem.key}}:
+      </div>
+      <div fxFlex="50" class="colValue">
+        {{progressItem.value}}
+      </div>
+    </div>
+  
+    
+    <button mat-button color="primary" type="button" (click)="onResetClick()" *ngIf="!progressModel.inProgress && !progressModel.isCancelling">Заново</button>
+    <button mat-button color="primary" type="button" (click)="onCancelClick()" *ngIf="progressModel.inProgress || progressModel.isCancelling"
+      [disabled]="progressModel.isCancelling">Отмена</button>
+  </div>
+  
