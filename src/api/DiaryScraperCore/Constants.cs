@@ -4,6 +4,7 @@ namespace DiaryScraperCore
     {
         public const string ImagesDir = "images";
         public const string PostsDir = "posts";
+        public const string PostEditsDir = "postedits";
         public const string DbName = "scrape.db";
         public const int DownloadRetryCount = 3;
     }

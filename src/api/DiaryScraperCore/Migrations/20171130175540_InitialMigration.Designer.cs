@@ -5,13 +5,14 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.Internal;
 using Microsoft.EntityFrameworkCore.ValueGeneration;
 using System;
 
 namespace DiaryScraperCore.Migrations
 {
     [DbContext(typeof(ScrapeContext))]
-    [Migration("20171108192635_InitialMigration")]
+    [Migration("20171130175540_InitialMigration")]
     partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,6 +43,17 @@ namespace DiaryScraperCore.Migrations
                     b.HasDiscriminator<string>("Discriminator").HasValue("DownloadResource");
                 });
 
+            modelBuilder.Entity("DiaryScraperCore.DiaryDatePage", b =>
+                {
+                    b.HasBaseType("DiaryScraperCore.DownloadResource");
+
+                    b.Property<DateTime>("PostDate");
+
+                    b.ToTable("DiaryDatePage");
+
+                    b.HasDiscriminator().HasValue("DiaryDatePage");
+                });
+
             modelBuilder.Entity("DiaryScraperCore.DiaryImage", b =>
                 {
                     b.HasBaseType("DiaryScraperCore.DownloadResource");
@@ -60,6 +72,28 @@ namespace DiaryScraperCore.Migrations
                     b.ToTable("DiaryPost");
 
                     b.HasDiscriminator().HasValue("DiaryPost");
+                });
+
+            modelBuilder.Entity("DiaryScraperCore.DiaryPostEdit", b =>
+                {
+                    b.HasBaseType("DiaryScraperCore.DownloadResource");
+
+                    b.Property<int>("PostId");
+
+                    b.HasIndex("PostId")
+                        .IsUnique();
+
+                    b.ToTable("DiaryPostEdit");
+
+                    b.HasDiscriminator().HasValue("DiaryPostEdit");
+                });
+
+            modelBuilder.Entity("DiaryScraperCore.DiaryPostEdit", b =>
+                {
+                    b.HasOne("DiaryScraperCore.DiaryPost", "Post")
+                        .WithOne("PostEdit")
+                        .HasForeignKey("DiaryScraperCore.DiaryPostEdit", "PostId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 #pragma warning restore 612, 618
         }

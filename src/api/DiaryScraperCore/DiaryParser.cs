@@ -130,12 +130,22 @@ namespace DiaryScraperCore
             var posts = new List<DiaryPostDto>();
             foreach (var fPath in filePaths)
             {
+                var editPath = Regex.Replace(fPath, @"([\\\/])posts([\\\/])", "$1postedits$2");
+                editPath = Regex.Replace(editPath, @"\.htm$", "_edit.htm");
+
                 Progress.Values[ParseProgressNames.CurrentFile] = Path.GetFileName(fPath);
                 var postDto = new DiaryPostDto();
-                IHtmlDocument doc;
+                IHtmlDocument doc, docEdit = null;
                 using (var sr = new StreamReader(File.Open(fPath, FileMode.Open), Encoding.GetEncoding(1251)))
                 {
                     doc = await _parser.ParseAsync(sr.BaseStream, cancellationToken);
+                }
+                if (File.Exists(editPath))
+                {
+                    using (var sr = new StreamReader(File.Open(editPath, FileMode.Open), Encoding.GetEncoding(1251)))
+                    {
+                        docEdit = await _parser.ParseAsync(sr.BaseStream, cancellationToken);
+                    }
                 }
 
                 var postDiv = doc.QuerySelector("div.singlePost");
@@ -152,10 +162,71 @@ namespace DiaryScraperCore
                 var dateline2 = postDiv.QuerySelector(".postTitle.header span").TextContent;
                 postDto.DatelineDate = dateline1 + ", " + dateline2;
                 postDto.DatelistCdate = postDto.DatelineDate;
-                postDto.MessageHtml = postDiv.QuerySelector(".postInner .paragraph div").InnerHtml;
-                postDto.Title = postDiv.QuerySelector(".postTitle.header h2").TextContent;
 
+                var moreLinks = doc.QuerySelectorAll("a.LinkMore");
+                foreach (var link in moreLinks)
+                {
+                    var linkId = link.Id;
+                    var moreSpanId = linkId.Replace("link", "");
+                    var spanElement = doc.QuerySelector($"#{moreSpanId}");
+                    if (spanElement == null)
+                    {
+                        continue;
+                    }
+                    var moreText = link.TextContent;
+                    var replacementHtml = $"[MORE={moreText}]{spanElement.InnerHtml}[/MORE]";
+                    link.Remove();
+                    spanElement.OuterHtml = replacementHtml;
+                }
+
+                var brs = doc.QuerySelectorAll(".postInner .paragraph div br");
+                foreach (var br in brs)
+                {
+                    br.OuterHtml = "\n";
+                }
+
+                var anchors = doc.QuerySelectorAll("a[name*='more']").Where(a => !a.HasAttribute("href"));
+                foreach (var a in anchors)
+                {
+                    a.Remove();
+                }
+
+                if (docEdit != null)
+                {
+                    postDto.MessageHtml = docEdit.QuerySelector("textarea#message").TextContent;
+                }
+                else
+                {
+
+                    postDto.MessageHtml = postDiv.QuerySelector(".postInner .paragraph div").InnerHtml;
+                }
+                postDto.Title = postDiv.QuerySelector(".postTitle.header h2").TextContent;
+                postDto.AuthorUsername = postDiv.QuerySelector("div.authorName a strong").TextContent;
                 postDto.Tags.AddRange(postDiv.QuerySelectorAll("p.atTag a").Select(e => e.TextContent));
+
+                if (docEdit != null)
+                {
+                    var checkedAccess = docEdit.QuerySelector("input[type='radio'][id*='closeaccessmode']:checked");
+                    postDto.Access = (checkedAccess == null) ? 0 : Convert.ToInt32(checkedAccess.GetAttribute("value"));
+
+                    var checkNoComment = docEdit.QuerySelector("input#nocomm");
+                    postDto.NoComments = (checkNoComment == null || !checkNoComment.HasAttribute("checked")) ? 0 : 1;
+
+                    var accessListText = docEdit.QuerySelector("textarea#access_list2").TextContent;
+                    if (!string.IsNullOrEmpty(accessListText))
+                    {
+                        postDto.AccessList = accessListText.Split("\n").ToList();
+                    }
+                }
+                else
+                {
+                    var lockImg = postDiv.QuerySelector(".postTitle h2 img[alt='lock']");
+                    postDto.Access = (lockImg == null) ? 0 : 7;
+
+                    var subscribeEl = doc.QuerySelector("li.subscribe");
+                    postDto.NoComments = (subscribeEl == null) ? 1 : 0;
+                }
+
 
                 var commentElements = doc.QuerySelectorAll("div.singleComment");
                 foreach (var commentElement in commentElements)
@@ -186,10 +257,12 @@ namespace DiaryScraperCore
 
     public class DiaryPostDto
     {
+        [JsonProperty("author_username")]
+        public string AuthorUsername { get; set; }
         public List<string> Tags { get; set; } = new List<string>();
         [JsonProperty("no_comments")]
-        public byte NoComments { get; set; }
-        public byte Access { get; set; }
+        public int NoComments { get; set; }
+        public int Access { get; set; }
         public string Title { get; set; }
         [JsonProperty("message_html")]
         public string MessageHtml { get; set; }
@@ -200,6 +273,8 @@ namespace DiaryScraperCore
         [JsonProperty("postid")]
         public string PostId { get; set; }
 
+        [JsonProperty("access_list")]
+        public List<string> AccessList { get; set; } = new List<string>();
 
         public List<DiaryCommentDto> Comments { get; set; } = new List<DiaryCommentDto>();
     }

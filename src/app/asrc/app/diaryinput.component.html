@@ -21,19 +21,34 @@
       </td>
     </tr>
   </table>
-  <mat-form-field>
-    <span matPrefix>http://</span>
-    <input matInput [(ngModel)]="inputData.diaryAddress" #diaryNameFormControl="ngModel" name="diaryNameInput" id="diaryNameInput"
-      placeholder="Адрес дневника" type="text" [errorStateMatcher]="instantErrorStateMatcher" required pattern="^[\w-]+$">
-    <span matSuffix>.diary.ru</span>
-    <mat-hint>http://<strong>адрес_дневника</strong>.diary.ru</mat-hint>
-    <mat-error *ngIf="diaryNameFormControl.hasError('pattern') && !diaryNameFormControl.hasError('required')">
-      Введённый адрес содержит некорректные символы
-    </mat-error>
-    <mat-error *ngIf="diaryNameFormControl.hasError('required')">
-      Необходимо заполнить адрес дневника
-    </mat-error>
-  </mat-form-field>
+  <table>
+    <tr>
+      <td>
+        <mat-form-field class="fullWidth">
+          <span matPrefix>http://</span>
+          <input matInput [(ngModel)]="inputData.diaryAddress" #diaryNameFormControl="ngModel" name="diaryNameInput" id="diaryNameInput"
+            placeholder="Адрес дневника" type="text" [errorStateMatcher]="instantErrorStateMatcher" required pattern="^[\w-]+$">
+          <span matSuffix>.diary.ru</span>
+          <mat-hint>http://
+            <strong>адрес_дневника</strong>.diary.ru</mat-hint>
+          <mat-error *ngIf="diaryNameFormControl.hasError('pattern') && !diaryNameFormControl.hasError('required')">
+            Введённый адрес содержит некорректные символы
+          </mat-error>
+          <mat-error *ngIf="diaryNameFormControl.hasError('required')">
+            Необходимо заполнить адрес дневника
+          </mat-error>
+        </mat-form-field>
+      </td>
+      <td style="width: 3%"></td>
+      <td style="width: 30%;">
+        <mat-form-field class="fullWidth">
+          <input matInput placeholder="Задержка(мс)" [(ngModel)]="inputData.requestDelay" #requestDelayModel="ngModel" name="requestDelayInput"
+            id="requestDelayInput" required type="number" min="100" max="5000" step="100">
+        </mat-form-field>
+      </td>
+    </tr>
+  </table>
+
   <mat-form-field>
     <input matInput placeholder="Рабочая папка" readonly [(ngModel)]="inputData.workingDir" #workingDirFormControl="ngModel"
       name="workingDirInput" id="workingDirInput" required>
@@ -84,10 +99,7 @@
         <mat-checkbox [(ngModel)]="inputData.overwrite" name="overwriteCheck" id="overwriteCheck">Перезаписывать данные</mat-checkbox>
       </td>
       <td style="width:25%;">
-        <mat-form-field class="fullWidth">
-          <input matInput placeholder="Задержка(мс)" [(ngModel)]="inputData.requestDelay" #requestDelayModel="ngModel" name="requestDelayInput"
-            id="requestDelayInput" required type="number" min="100" max="5000" step="100">
-        </mat-form-field>
+        <mat-checkbox [(ngModel)]="inputData.downloadEdits" name="downloadEditsCheck" id="downloadEditsCheck">Скачивать страницы редактирования</mat-checkbox>
       </td>
     </tr>
   </table>

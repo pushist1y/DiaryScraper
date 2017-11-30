@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -93,7 +94,8 @@ namespace DiaryScraperCore
                     RequestDelay = descriptor.RequestDelay,
                     ScrapeStart = descriptor.ScrapeStart,
                     ScrapeEnd = descriptor.ScrapeEnd,
-                    Overwrite = descriptor.Overwrite
+                    Overwrite = descriptor.Overwrite,
+                    DownloadEdits = descriptor.DownloadEdits
                 };
 
                 var scraper = new DiaryScraperNew(logger, context, options);
@@ -136,7 +138,7 @@ namespace DiaryScraperCore
         }
 
 
-        
+
 
         private void EnsureDirs(string workingDir, string diaryName)
         {
@@ -144,31 +146,28 @@ namespace DiaryScraperCore
             {
                 throw new ArgumentException($"Директория [{workingDir}] не существует");
             }
+            var dirs = new List<string>();
             var diaryDir = Path.Combine(workingDir, diaryName);
+            dirs.Add(diaryDir);
+            dirs.Add(Path.Combine(diaryDir, Constants.PostsDir));
+            dirs.Add(Path.Combine(diaryDir, Constants.ImagesDir));
+            dirs.Add(Path.Combine(diaryDir, Constants.PostEditsDir));
 
-            if (!Directory.Exists(diaryDir))
+            foreach (var dir in dirs)
             {
-                Directory.CreateDirectory(diaryDir);
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
             }
-
-            var postDir = Path.Combine(diaryDir, Constants.PostsDir);
-            if (!Directory.Exists(postDir))
-            {
-                Directory.CreateDirectory(postDir);
-            }
-
-            var imagesDir = Path.Combine(diaryDir, Constants.ImagesDir);
-            if (!Directory.Exists(imagesDir))
-            {
-                Directory.CreateDirectory(imagesDir);
-            }
+            
         }
     }
 
-    public class DiaryParserFactory: WorkerFactoryBase
+    public class DiaryParserFactory : WorkerFactoryBase
     {
         private readonly ILogger<DiaryParser> _logger;
-        public DiaryParserFactory(IServiceProvider serviceProvider, ILogger<DiaryParser> logger): base(serviceProvider)
+        public DiaryParserFactory(IServiceProvider serviceProvider, ILogger<DiaryParser> logger) : base(serviceProvider)
         {
             _logger = logger;
         }
@@ -179,7 +178,7 @@ namespace DiaryScraperCore
             options.DiaryDir = descriptor.WorkingDir;
 
             descriptor.Parser = new DiaryParser(options, _logger);
-            
+
             return descriptor.Parser;
         }
     }

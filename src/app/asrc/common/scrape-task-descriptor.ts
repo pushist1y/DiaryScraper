@@ -15,6 +15,7 @@ export class ScrapeTaskDescriptor extends TaskDescriptorBase {
     public scrapeEnd: moment.Moment;
     public overwrite: boolean;
     public requestDelay: number;
+    public downloadEdits: boolean;
 
 }
 

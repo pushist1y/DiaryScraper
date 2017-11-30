@@ -44,8 +44,6 @@ namespace DiaryScraperCore
                 return false;
             }
 
-            
-
             var signatureElement = votingDiv.QuerySelector("input[name='signature']");
             var signature = signatureElement.GetAttribute("value");
 
@@ -70,32 +68,16 @@ namespace DiaryScraperCore
             replaceDiv.InnerHtml = newHtml;
             votingDiv.QuerySelector("span[id*='spanpollaction']")?.Remove();
 
-            Console.WriteLine(res.DownloadedData.AsAnsiString());
             return true;
         }
 
-        public async Task FixPage(DataDownloaderResult downloadedDiaryPost)
+        public async Task<bool> FixPage(IHtmlDocument doc)
         {
-            if (string.IsNullOrEmpty(downloadedDiaryPost.Resource.RelativePath))
-            {
-                return;
-            }
-
-            var src = downloadedDiaryPost.DownloadedData.AsAnsiString();
-            var doc = _parser.Parse(src);
-
             var rewrite = false;
             rewrite = rewrite || await FixMore(doc);
             rewrite = rewrite || await FixVoting(doc);
+            return rewrite;
 
-            if (rewrite)
-            {
-                var filePath = Path.Combine(_diaryDir, downloadedDiaryPost.Resource.RelativePath);
-                using (var sw = new StreamWriter(File.Open(filePath, FileMode.Create), Encoding.GetEncoding(1251)))
-                {
-                    doc.ToHtml(sw, XmlMarkupFormatter.Instance);
-                }
-            }
         }
         protected async Task<bool> FixMore(IHtmlDocument doc)
         {
