@@ -197,11 +197,12 @@ namespace DiaryScraperCore
                 }
                 else
                 {
-
                     postDto.MessageHtml = postDiv.QuerySelector(".postInner .paragraph div").InnerHtml;
                 }
                 postDto.Title = postDiv.QuerySelector(".postTitle.header h2").TextContent;
                 postDto.AuthorUsername = postDiv.QuerySelector("div.authorName a strong").TextContent;
+                postDto.CurrentMusic = postDiv.QuerySelector("p.atMusic em span")?.NextSibling?.TextContent?.Trim() ?? string.Empty;
+                postDto.CurrentMood = postDiv.QuerySelector("p.atMood em span")?.NextSibling?.TextContent?.Trim() ?? string.Empty;
                 postDto.Tags.AddRange(postDiv.QuerySelectorAll("p.atTag a").Select(e => e.TextContent));
 
                 if (docEdit != null)
@@ -275,6 +276,10 @@ namespace DiaryScraperCore
 
         [JsonProperty("access_list")]
         public List<string> AccessList { get; set; } = new List<string>();
+        [JsonProperty("current_mood")]
+        public string CurrentMood { get; set; }
+        [JsonProperty("current_music")]
+        public string CurrentMusic { get; set; }
 
         public List<DiaryCommentDto> Comments { get; set; } = new List<DiaryCommentDto>();
     }
