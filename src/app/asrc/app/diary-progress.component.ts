@@ -41,6 +41,7 @@ export class DiaryProgressComponent implements OnInit {
     newTask.workingDir = this.inputData.workingDir;
     newTask.overwrite = this.inputData.overwrite;
     newTask.downloadEdits = this.inputData.downloadEdits;
+    newTask.downloadAccount = this.inputData.downloadAccount;
     newTask.requestDelay = this.inputData.requestDelay;
     if (this.inputData.dateStart.enabled) {
       newTask.scrapeStart = moment(this.inputData.dateStart.value).utc().subtract(new Date().getTimezoneOffset(), 'm');
@@ -52,12 +53,10 @@ export class DiaryProgressComponent implements OnInit {
     this.scrapeService
       .startScraping(newTask, this.inputData.diaryLogin, this.inputData.diaryPassword)
       .subscribe(returnedTask => {
-        console.log("starting scraping");
         this.updateTaskData(returnedTask);
         this.progressModel.inProgress = true;
         this.progressModel.scheduler = Observable.interval(1000);
         this.progressModel.subscription = this.progressModel.scheduler.subscribe((value: number) => {
-          console.log("calling refresh");
           this.refreshTask();
         });
       }, (error: HttpErrorResponse) => {
@@ -69,22 +68,22 @@ export class DiaryProgressComponent implements OnInit {
   }
 
   refreshTask() {
-    if (!this.progressModel.inProgress || this.progressModel.currentTask === undefined) {
+    if (!this.progressModel.inProgress || this.progressModel.currentTask === undefined || this.progressModel.isRefreshing) {
       return;
     }
-    console.log("refreshing");
+    this.progressModel.isRefreshing = true;
     this.scrapeService
       .updateScraping(this.progressModel.currentTask.guidString)
       .subscribe((updatedTask: ScrapeTaskDescriptor) => {
-        console.log("refresh finished");
         this.updateTaskData(updatedTask);
         if ((updatedTask.status && updatedTask.status >= 5) || !!updatedTask.error) {
           this.stopProgress();
-
         }
+        this.progressModel.isRefreshing = false;
       }, (error: HttpErrorResponse) => {
         this.stopProgress();
         this.progressModel.currentTask.error = error.message;
+        this.progressModel.isRefreshing = false;
       });
   }
 
@@ -93,7 +92,6 @@ export class DiaryProgressComponent implements OnInit {
   }
 
   stopProgress() {
-    console.log("stopping progress");
     if (this.progressModel.subscription) {
       this.progressModel.subscription.unsubscribe();
       this.progressModel.subscription = null;
@@ -108,10 +106,8 @@ export class DiaryProgressComponent implements OnInit {
     }
     this.progressModel.isCancelling = true;
     this.stopProgress();
-    console.log("cancelling");
     this.scrapeService.cancelScraping(this.progressModel.currentTask.guidString)
       .subscribe((cancelledTask: ScrapeTaskDescriptor) => {
-        console.log("cancel finished");
         this.updateTaskData(cancelledTask);
         this.progressModel.isCancelling = false;
       }, (error: HttpErrorResponse) => {
@@ -125,7 +121,6 @@ export class DiaryProgressComponent implements OnInit {
   }
 
   onCancelClick() {
-    console.log("cancel clicked");
     this.cancelTask();
   }
 
@@ -167,7 +162,8 @@ export class ProgressModelBase {
   inProgress: boolean = false;
   scheduler: Observable<number>;
   subscription: Subscription;
-  isCancelling: boolean = false;;
+  isCancelling: boolean = false;
+  isRefreshing: boolean = false;
 }
 
 class ProgressModel extends ProgressModelBase {

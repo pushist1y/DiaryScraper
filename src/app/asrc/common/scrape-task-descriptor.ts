@@ -16,6 +16,7 @@ export class ScrapeTaskDescriptor extends TaskDescriptorBase {
     public overwrite: boolean;
     public requestDelay: number;
     public downloadEdits: boolean;
+    public downloadAccount: boolean;
 
 }
 

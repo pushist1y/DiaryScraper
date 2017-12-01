@@ -10,6 +10,7 @@ export class DiaryScraperInputData {
     public overwrite: boolean = false;
     public requestDelay: number = 1000;
     public downloadEdits: boolean = false;
+    public downloadAccount: boolean = false;
   
     constructor() {
       this.dateStart = new DateCheck();

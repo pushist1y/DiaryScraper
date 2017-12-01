@@ -95,4 +95,15 @@ namespace DiaryScraperCore
     {
         public DateTime PostDate { get; set; }
     }
+
+    public class DiaryAccountPage: DownloadResource
+    {
+        [NotMapped]
+        public override string DirName => Constants.AccountPagesDir;
+        public override string GenerateLocalPath(string prefix)
+        {
+            this.LocalPath = Path.Combine(DirName, prefix);
+            return this.LocalPath;
+        }
+    }
 }

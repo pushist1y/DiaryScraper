@@ -95,7 +95,8 @@ namespace DiaryScraperCore
                     ScrapeStart = descriptor.ScrapeStart,
                     ScrapeEnd = descriptor.ScrapeEnd,
                     Overwrite = descriptor.Overwrite,
-                    DownloadEdits = descriptor.DownloadEdits
+                    DownloadEdits = descriptor.DownloadEdits,
+                    DownloadAccount = descriptor.DownloadAccount
                 };
 
                 var scraper = new DiaryScraperNew(logger, context, options);
@@ -152,6 +153,7 @@ namespace DiaryScraperCore
             dirs.Add(Path.Combine(diaryDir, Constants.PostsDir));
             dirs.Add(Path.Combine(diaryDir, Constants.ImagesDir));
             dirs.Add(Path.Combine(diaryDir, Constants.PostEditsDir));
+            dirs.Add(Path.Combine(diaryDir, Constants.AccountPagesDir));
 
             foreach (var dir in dirs)
             {

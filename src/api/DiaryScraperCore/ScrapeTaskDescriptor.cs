@@ -25,6 +25,7 @@ namespace DiaryScraperCore
         public DateTime ScrapeEnd { get; set; } = DateTime.MaxValue;
         public bool Overwrite { get; set; } = false;
         public bool DownloadEdits { get; set; } = false;
+        public bool DownloadAccount { get; set; } = false;
         private int _requestDelay = 1000;
         public int RequestDelay
         {

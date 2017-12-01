@@ -61,7 +61,7 @@ namespace DiaryScraperCore
 
         private void OnResourceDownloaded(object sender, DataDownloaderEventArgs args)
         {
-            if (args.Resource is DiaryPost || args.Resource is DiaryDatePage)
+            if (args.Resource is DiaryPost || args.Resource is DiaryDatePage || args.Resource is DiaryAccountPage)
             {
                 Progress.PageDownloaded(args.DownloadedData);
             }
@@ -123,6 +123,12 @@ namespace DiaryScraperCore
             cancellationToken.ThrowIfCancellationRequested();
             var dateUrls = GetDateUrls(cancellationToken);
             Progress.Values[ScrapeProgressNames.DatePagesDiscovered] = dateUrls.Count;
+            
+            if (_options.DownloadAccount)
+            {
+                DownloadMetadataPages(cancellationToken).Wait();
+            }
+
             Progress.RangeDiscovered = true;
 
             ScanDateUrlsAsync(dateUrls, cancellationToken).Wait();
@@ -263,7 +269,7 @@ namespace DiaryScraperCore
                 if (editLink != null)
                 {
                     var editUrl = editLink.GetAttribute("href");
-                    var editInfo = new DiaryPostEdit{Url = editUrl};
+                    var editInfo = new DiaryPostEdit { Url = editUrl };
                     editInfo.Post = postInfo;
                     postInfo.PostEdit = editInfo;
                     editInfo.GenerateLocalPath(date.ToString("yyyy-MM-dd") + "-");
@@ -274,11 +280,10 @@ namespace DiaryScraperCore
             if (await _moreFixer.FixPage(doc) && !string.IsNullOrEmpty(downloadResult.Resource.RelativePath))
             {
                 var filePath = Path.Combine(_options.WorkingDir, _options.DiaryName, downloadResult.Resource.RelativePath);
-                using (var sw = new StreamWriter(File.Open(filePath, FileMode.Create), Encoding.GetEncoding(1251)))
-                {
-                    doc.ToHtml(sw, XmlMarkupFormatter.Instance);
-                }
+                doc.WriteToFile(filePath, Encoding.GetEncoding(1251));                
             }
+
+            html = doc.GetHtml();
 
             var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))", RegexOptions.IgnoreCase);
             var imageUrls = matches.Select(m2 => m2.Groups[1].Value).ToList();
@@ -292,7 +297,41 @@ namespace DiaryScraperCore
             await _downloadExistingChecker.AddProcessedDataAsync(postInfo);
 
         }
+
+        private async Task DownloadMetadataPages(CancellationToken cancellationToken)
+        {
+            var dr = new DiaryAccountPage() { Url = "http://www.diary.ru" };
+            dr.GenerateLocalPath("diary.htm");
+            var dRes = await _downloader.Download(dr, false, _options.RequestDelay);
+            var doc = await _parser.ParseAsync(dRes.DownloadedData.AsAnsiString());
+            var href = doc.QuerySelector("a[title='профиль']").GetAttribute("href");
+            var userId = Regex.Replace(href, @"\/member\/\?(\d+)$", "$1");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var urls = new Dictionary<string, string>{
+                {"http://www.diary.ru/options/member/?access", AccountPagesFileNames.MemberAccess},
+                {"http://www.diary.ru/options/diary/?access", AccountPagesFileNames.DiaryAccess},
+                {"http://www.diary.ru/options/diary/?commentaccess", AccountPagesFileNames.DiaryCommentAccess},
+                {"http://www.diary.ru/options/diary/?pch", AccountPagesFileNames.DiaryPch},
+                {$"http://www.diary.ru/member/?{userId}&fullreaderslist&fullfavoriteslist&fullcommunity_membershiplist&fullcommunity_moderatorslist&fullcommunity_masterslist&fullcommunity_memberslist", AccountPagesFileNames.Member},
+                {"http://www.diary.ru/options/diary/?tags", AccountPagesFileNames.Tags},
+                {"http://www.diary.ru/options/member/?profile", AccountPagesFileNames.Profile},
+                {"http://www.diary.ru/options/member/?geography", AccountPagesFileNames.Geography},
+                {"http://www.diary.ru/options/diary/?owner", AccountPagesFileNames.Owner}
+            };
+            var sPages = await _downloadExistingChecker.FilterUrlsAsync<DiaryAccountPage>(urls.Keys, _options.Overwrite);
+            foreach (var sPage in sPages)
+            {
+                sPage.GenerateLocalPath(urls[sPage.Url]);
+                dRes = await _downloader.Download(sPage);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            await _downloadExistingChecker.AddProcessedDataAsync(sPages as IEnumerable<DiaryAccountPage>);
+
+        }
     }
+
+
 
     public class DiaryScraperOptions
     {
@@ -305,6 +344,7 @@ namespace DiaryScraperCore
         public DateTime ScrapeEnd { get; set; }
         public bool Overwrite { get; set; }
         public bool DownloadEdits { get; set; }
+        public bool DownloadAccount { get; set; }
 
     }
 

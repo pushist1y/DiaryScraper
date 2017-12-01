@@ -18,5 +18,6 @@ namespace DiaryScraperCore
         public DbSet<DiaryImage> Images { get; set; }
         public DbSet<DiaryPost> Posts { get; set; }
         public DbSet<DiaryDatePage> DatePages { get; set; }
+        public DbSet<DiaryAccountPage> AccountPages { get; set; }
     }
 }
