@@ -8,6 +8,7 @@ namespace DiaryScraperCore
         public const string PostsDir = "posts";
         public const string PostEditsDir = "postedits";
         public const string AccountPagesDir = "accountpages";
+        public const string ArchiveDir = "archive";
         public const string DbName = "scrape.db";
         public const int DownloadRetryCount = 3;
 
@@ -31,6 +32,7 @@ namespace DiaryScraperCore
         public const string PostsProcessed = "Постов обработано";
         public const string CurrentFile = "Текущий файл";
     }
+
 
     public static class AccountPagesFileNames
     {

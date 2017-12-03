@@ -16,23 +16,21 @@ using Newtonsoft.Json.Serialization;
 
 namespace DiaryScraperCore
 {
-    public class DiaryParserEventArgs { }
-
     public class DiaryParserOptions
     {
         public string DiaryDir { get; set; }
     }
-    public class DiaryParser
+    public class DiaryParser : DiaryAsyncImplementationBase
     {
-        public Task Worker { get; set; }
-        public CancellationTokenSource TokenSource { get; set; }
         public ParseTaskProgress Progress { get; set; } = new ParseTaskProgress();
-        public event EventHandler<ScraperFinishedArguments> ParseFinished;
+
+        protected override ILogger Logger => _logger;
 
         private readonly DiaryParserOptions _options;
         private readonly ILogger<DiaryParser> _logger;
         private readonly HtmlParser _parser;
         private AccountDataParser _accountParser;
+        private string _parsedDir;
         public DiaryParser(DiaryParserOptions options, ILogger<DiaryParser> logger)
         {
             _options = options;
@@ -43,50 +41,9 @@ namespace DiaryScraperCore
             _accountParser = new AccountDataParser(_options.DiaryDir, logger);
         }
 
-        public Task Run()
-        {
-            Worker = new Task(() => DoWorkWrapped(TokenSource.Token));
-            Worker.Start();
-            return Worker;
-        }
 
-        public void DoWorkWrapped(CancellationToken cancellationToken)
-        {
-            try
-            {
-                DoWork(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                Progress.Error = "Операция прервана пользователем";
-            }
-            catch (AggregateException e)
-            {
-                if (e.InnerException is TaskCanceledException)
-                {
-                    Progress.Error = "Операция прервана пользователем";
-                }
-                else
-                {
-                    Progress.Error = e.InnerException.Message;
-                    _logger.LogError(e.InnerException, "Error");
-                    throw;
-                }
-            }
-            catch (Exception e)
-            {
-                Progress.Error = e.Message;
-                _logger.LogError(e, "Error");
-                throw;
-            }
-            finally
-            {
-                ParseFinished?.Invoke(this, new ScraperFinishedArguments());
-            }
-        }
 
-        private string _parsedDir;
-        public void DoWork(CancellationToken cancellationToken)
+        public override void DoWork(CancellationToken cancellationToken)
         {
             if (!Directory.Exists(_options.DiaryDir))
             {
@@ -104,8 +61,6 @@ namespace DiaryScraperCore
             {
                 throw new ArgumentException($"Директория [{postsDir}] не существует");
             }
-
-
 
             _parsedDir = Path.Combine(_options.DiaryDir, "parsed");
             if (!Directory.Exists(_parsedDir))
@@ -279,5 +234,9 @@ namespace DiaryScraperCore
             return accountDto;
         }
 
+        public override void SetError(string error)
+        {
+            Progress.Error = error;
+        }
     }
 }

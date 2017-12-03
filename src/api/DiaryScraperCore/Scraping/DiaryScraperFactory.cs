@@ -51,7 +51,7 @@ namespace DiaryScraperCore
 
                 var scraper = new DiaryScraperNew(logger, context, options);
 
-                scraper.ScrapeFinished += (s, e) =>
+                scraper.WorkFinished += (s, e) =>
                 {
                     UnsetLog(cfg);
                 };
@@ -112,9 +112,9 @@ namespace DiaryScraperCore
                     Directory.CreateDirectory(dir);
                 }
             }
-            
+
         }
     }
 
-    
+
 }

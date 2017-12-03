@@ -15,15 +15,8 @@ using Microsoft.Extensions.Logging;
 
 namespace DiaryScraperCore
 {
-
-
-    public class ScraperFinishedArguments
-    { }
-    public class DiaryScraperNew
+    public class DiaryScraperNew : DiaryAsyncImplementationBase
     {
-        public event EventHandler<ScraperFinishedArguments> ScrapeFinished;
-        public Task Worker;
-        public CancellationTokenSource TokenSource;
         private readonly ILogger<DiaryScraperNew> _logger;
         private readonly CookieContainer _cookieContainer;
         private readonly CF_WebClient _webClient;
@@ -34,12 +27,15 @@ namespace DiaryScraperCore
         private readonly DataDownloader _downloader;
         private readonly DiaryMoreLinksFixer _moreFixer;
         private readonly HtmlParser _parser;
+
+        protected override ILogger Logger => _logger;
+
         public DiaryScraperNew(ILogger<DiaryScraperNew> logger, ScrapeContext context, DiaryScraperOptions options)
         {
             _logger = logger;
             _cookieContainer = new CookieContainer();
             _webClient = new CF_WebClient(_cookieContainer);
-            TokenSource = new CancellationTokenSource();
+
 
             _context = context;
             _options = options;
@@ -59,6 +55,11 @@ namespace DiaryScraperCore
             _moreFixer = new DiaryMoreLinksFixer(_downloader, _options.WorkingDir, _options.DiaryName);
         }
 
+        public override void SetError(string error)
+        {
+            Progress.Error = error;
+        }
+
         private void OnResourceDownloaded(object sender, DataDownloaderEventArgs args)
         {
             if (args.Resource is DiaryPost || args.Resource is DiaryDatePage || args.Resource is DiaryAccountPage)
@@ -71,49 +72,8 @@ namespace DiaryScraperCore
             }
         }
 
-        public Task Run()
-        {
-            Worker = new Task(() => DoWorkWrapped(TokenSource.Token));
-            Worker.Start();
-            return Worker;
-        }
 
-        public void DoWorkWrapped(CancellationToken cancellationToken)
-        {
-            try
-            {
-                DoWork(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                Progress.Error = "Операция прервана пользователем";
-            }
-            catch (AggregateException e)
-            {
-                if (e.InnerException is TaskCanceledException)
-                {
-                    Progress.Error = "Операция прервана пользователем";
-                }
-                else
-                {
-                    Progress.Error = e.InnerException.Message;
-                    _logger.LogError(e.InnerException, "Error");
-                    throw;
-                }
-            }
-            catch (Exception e)
-            {
-                Progress.Error = e.Message;
-                _logger.LogError(e, "Error");
-                throw;
-            }
-            finally
-            {
-                ScrapeFinished?.Invoke(this, new ScraperFinishedArguments());
-            }
-        }
-
-        public void DoWork(CancellationToken cancellationToken)
+        public override void DoWork(CancellationToken cancellationToken)
         {
             if (!Login())
             {
@@ -123,7 +83,7 @@ namespace DiaryScraperCore
             cancellationToken.ThrowIfCancellationRequested();
             var dateUrls = GetDateUrls(cancellationToken);
             Progress.Values[ScrapeProgressNames.DatePagesDiscovered] = dateUrls.Count;
-            
+
             if (_options.DownloadAccount)
             {
                 DownloadMetadataPages(cancellationToken).Wait();
@@ -281,7 +241,7 @@ namespace DiaryScraperCore
             if (await _moreFixer.FixPage(doc) && !string.IsNullOrEmpty(downloadResult.Resource.RelativePath))
             {
                 var filePath = Path.Combine(_options.WorkingDir, _options.DiaryName, downloadResult.Resource.RelativePath);
-                doc.WriteToFile(filePath, Encoding.GetEncoding(1251));                
+                doc.WriteToFile(filePath, Encoding.GetEncoding(1251));
             }
 
             html = doc.GetHtml();
@@ -299,12 +259,12 @@ namespace DiaryScraperCore
 
         }
 
-        
+
         private async Task DownloadLastPostsPage()
         {
             var url = "http://www.diary.ru/?last_post";
             var page = await _downloadExistingChecker.CheckUrlAsync<DiaryAccountPage>(url, _options.Overwrite);
-            if(page == null)
+            if (page == null)
             {
                 return;
             }
@@ -343,6 +303,8 @@ namespace DiaryScraperCore
             await _downloadExistingChecker.AddProcessedDataAsync(sPages as IEnumerable<DiaryAccountPage>);
 
         }
+
+
     }
 
 

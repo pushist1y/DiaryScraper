@@ -19,8 +19,8 @@ namespace DiaryScraperCore
         {
             get
             {
-                var disc = GetValue<int>(ParseProgressNames.PostsDiscovered);
-                var proc = GetValue<int>(ParseProgressNames.PostsProcessed);
+                var disc = GetValue<int>(_totalValueName);
+                var proc = GetValue<int>(_currentValueName);
                 if (disc == 0)
                 {
                     return RangeDiscovered ? 100 : 0;

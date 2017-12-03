@@ -18,7 +18,7 @@ namespace DiaryScraperCore
             var logger = _serviceProvider.GetRequiredService<ILogger<DiaryParser>>();
 
             descriptor.Parser = new DiaryParser(options, logger);
-            descriptor.Parser.ParseFinished += (s,e) => {
+            descriptor.Parser.WorkFinished += (s,e) => {
                 UnsetLog(cfg);
             };
 
