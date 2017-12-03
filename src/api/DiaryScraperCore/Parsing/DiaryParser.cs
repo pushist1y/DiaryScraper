@@ -26,7 +26,7 @@ namespace DiaryScraperCore
     {
         public Task Worker { get; set; }
         public CancellationTokenSource TokenSource { get; set; }
-        public DiaryParserProgress Progress { get; set; } = new DiaryParserProgress();
+        public ParseTaskProgress Progress { get; set; } = new ParseTaskProgress();
         public event EventHandler<ScraperFinishedArguments> ParseFinished;
 
         private readonly DiaryParserOptions _options;

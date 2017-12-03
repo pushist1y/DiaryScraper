@@ -6,7 +6,28 @@ namespace DiaryScraperCore
 {
     public abstract class TaskProgress
     {
-        public abstract int Percent { get; }
+        private readonly string _currentValueName;
+        private readonly string _totalValueName;
+        public TaskProgress(string currentValueName, string totalValueName)
+        {
+            _currentValueName = currentValueName;
+            _totalValueName = totalValueName;
+            Values[currentValueName] = 0;
+            Values[totalValueName] = 0;
+        }
+        public virtual int Percent
+        {
+            get
+            {
+                var disc = GetValue<int>(ParseProgressNames.PostsDiscovered);
+                var proc = GetValue<int>(ParseProgressNames.PostsProcessed);
+                if (disc == 0)
+                {
+                    return RangeDiscovered ? 100 : 0;
+                }
+                return Convert.ToInt32(100.0 * proc / disc);
+            }
+        }
         public bool RangeDiscovered { get; set; }
         [JsonIgnore]
         public string Error { get; set; }

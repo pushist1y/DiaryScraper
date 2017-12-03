@@ -30,7 +30,7 @@ namespace DiaryScraperCore
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            services.AddSingleton<TaskRunner>();
+            services.AddSingleton<ScrapeTaskRunner>();
             services.AddSingleton<ParseTaskRunner>();
             services.AddTransient<DiaryScraperFactory>();
             services.AddTransient<DiaryParserFactory>();
