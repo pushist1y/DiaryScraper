@@ -44,5 +44,6 @@ namespace DiaryScraperCore
         public const string Profile = "profile.htm";
         public const string Geography = "geography.htm";
         public const string Owner = "owner.htm";
+        public const string LastPosts = "lastposts.htm";
     }
 }

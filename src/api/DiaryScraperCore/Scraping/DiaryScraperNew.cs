@@ -128,6 +128,7 @@ namespace DiaryScraperCore
             {
                 DownloadMetadataPages(cancellationToken).Wait();
             }
+            DownloadLastPostsPage().Wait();
 
             Progress.RangeDiscovered = true;
 
@@ -296,6 +297,19 @@ namespace DiaryScraperCore
             await _downloadExistingChecker.AddProcessedDataAsync(downloadResults.Select(d => d.Resource as DiaryImage));
             await _downloadExistingChecker.AddProcessedDataAsync(postInfo);
 
+        }
+
+        
+        private async Task DownloadLastPostsPage()
+        {
+            var url = "http://www.diary.ru/?last_post";
+            var page = await _downloadExistingChecker.CheckUrlAsync<DiaryAccountPage>(url, _options.Overwrite);
+            if(page == null)
+            {
+                return;
+            }
+            page.GenerateLocalPath(AccountPagesFileNames.LastPosts);
+            await _downloader.Download(page, false, _options.RequestDelay);
         }
 
         private async Task DownloadMetadataPages(CancellationToken cancellationToken)
