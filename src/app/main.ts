@@ -53,7 +53,7 @@ app.on('activate', function () {
 
 function startApi() {
     //  run server
-    let apipath = path.join(__dirname, '..\\api\\DiaryScraperCore\\bin\\dist\\win\\DiaryScraperCore.exe')
+    let apipath = path.join(__dirname, '..\\dist\\win\\DiaryScraperCore.exe')
     if (os.platform() === 'darwin') {
         apipath = path.join(__dirname, '..//api//DiaryScraperCore//bin//dist//osx//DiaryScraperCore')
     }
