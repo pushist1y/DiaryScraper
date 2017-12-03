@@ -10,6 +10,7 @@
   },
   "repository": "https://github.com/pushist1y/DiaryScraper",
   "main": "main.js",
+  "nodeGypRebuild":"true",
   "devDependencies": {
     "electron": "^1.7.9",
     "electron-builder": "^19.45.4",
@@ -56,7 +57,8 @@
     "start": "electron .",
     "dist": "build",
     "tsc": "tsc",
-    "ng": "ng"
+    "ng": "ng",
+    "electron-builder": "electron-builder"
   },
   "build": {
     "appId": "diary-scraper",
