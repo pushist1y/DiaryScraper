@@ -1,22 +1,26 @@
 using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace DiaryScraperCore
 {
     public class DiaryParserFactory : WorkerFactoryBase
     {
-        private readonly ILogger<DiaryParser> _logger;
-        public DiaryParserFactory(IServiceProvider serviceProvider, ILogger<DiaryParser> logger) : base(serviceProvider)
+        public DiaryParserFactory(IServiceProvider serviceProvider) : base(serviceProvider)
         {
-            _logger = logger;
         }
 
         public DiaryParser GetParser(ParseTaskDescriptor descriptor)
         {
             var options = new DiaryParserOptions();
             options.DiaryDir = descriptor.WorkingDir;
+            var cfg = ConfigureLog(descriptor.WorkingDir);
+            var logger = _serviceProvider.GetRequiredService<ILogger<DiaryParser>>();
 
-            descriptor.Parser = new DiaryParser(options, _logger);
+            descriptor.Parser = new DiaryParser(options, logger);
+            descriptor.Parser.ParseFinished += (s,e) => {
+                UnsetLog(cfg);
+            };
 
             return descriptor.Parser;
         }
