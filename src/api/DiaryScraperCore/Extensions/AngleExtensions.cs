@@ -1,7 +1,9 @@
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp.Dom.Html;
+using AngleSharp.Parser.Html;
 using AngleSharp.Xml;
 
 namespace DiaryScraperCore
@@ -28,6 +30,14 @@ namespace DiaryScraperCore
             using (var sw = new StreamWriter(File.Open(filePath, FileMode.Create), encoding))
             {
                 doc.ToHtml(sw, XmlMarkupFormatter.Instance);
+            }
+        }
+
+        public static async Task<IHtmlDocument> FromFileAsync(this HtmlParser parser, string filePath, Encoding encoding, CancellationToken cancellationToken)
+        {
+            using (var sr = new StreamReader(File.Open(filePath, FileMode.Open), encoding))
+            {
+                return await parser.ParseAsync(sr.BaseStream, cancellationToken);
             }
         }
     }

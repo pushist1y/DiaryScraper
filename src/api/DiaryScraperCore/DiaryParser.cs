@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
+using AngleSharp.Dom;
 using AngleSharp.Dom.Html;
 using AngleSharp.Parser.Html;
 using Microsoft.Extensions.Logging;
@@ -31,6 +32,7 @@ namespace DiaryScraperCore
         private readonly DiaryParserOptions _options;
         private readonly ILogger<DiaryParser> _logger;
         private readonly HtmlParser _parser;
+        private AccountDataParser _accountParser;
         public DiaryParser(DiaryParserOptions options, ILogger<DiaryParser> logger)
         {
             _options = options;
@@ -38,6 +40,7 @@ namespace DiaryScraperCore
             var config = new Configuration().WithCss();
             _parser = new HtmlParser(config);
             TokenSource = new CancellationTokenSource();
+            _accountParser = new AccountDataParser(_options.DiaryDir, logger);
         }
 
         public Task Run()
@@ -102,10 +105,19 @@ namespace DiaryScraperCore
                 throw new ArgumentException($"Директория [{postsDir}] не существует");
             }
 
+
+
             _parsedDir = Path.Combine(_options.DiaryDir, "parsed");
             if (!Directory.Exists(_parsedDir))
             {
                 Directory.CreateDirectory(_parsedDir);
+            }
+
+            var accDto = ParseAccountData(cancellationToken).Result;
+            if (accDto != null)
+            {
+                var accPath = Path.Combine(_parsedDir, "account.json");
+                SerializeToFile(accDto, accPath).Wait();
             }
 
             var filePaths = new List<string>();
@@ -136,16 +148,10 @@ namespace DiaryScraperCore
                 Progress.Values[ParseProgressNames.CurrentFile] = Path.GetFileName(fPath);
                 var postDto = new DiaryPostDto();
                 IHtmlDocument doc, docEdit = null;
-                using (var sr = new StreamReader(File.Open(fPath, FileMode.Open), Encoding.GetEncoding(1251)))
-                {
-                    doc = await _parser.ParseAsync(sr.BaseStream, cancellationToken);
-                }
+                doc = await _parser.FromFileAsync(fPath, Encoding.GetEncoding(1251), cancellationToken);
                 if (File.Exists(editPath))
                 {
-                    using (var sr = new StreamReader(File.Open(editPath, FileMode.Open), Encoding.GetEncoding(1251)))
-                    {
-                        docEdit = await _parser.ParseAsync(sr.BaseStream, cancellationToken);
-                    }
+                    docEdit = await _parser.FromFileAsync(editPath, Encoding.GetEncoding(1251), cancellationToken);
                 }
 
                 var postDiv = doc.QuerySelector("div.singlePost");
@@ -242,7 +248,13 @@ namespace DiaryScraperCore
                 Progress.IncrementInt(ParseProgressNames.PostsProcessed, 1);
             }
 
-            var jsonStr = JsonConvert.SerializeObject(posts, new JsonSerializerSettings
+            await SerializeToFile(posts, filePath);
+
+        }
+
+        private async Task SerializeToFile(object data, string filePath)
+        {
+            var jsonStr = JsonConvert.SerializeObject(data, new JsonSerializerSettings
             {
                 ContractResolver = new CamelCasePropertyNamesContractResolver(),
                 Formatting = Formatting.Indented
@@ -252,6 +264,19 @@ namespace DiaryScraperCore
             {
                 await f.WriteLineAsync(jsonStr);
             }
+        }
+
+        private async Task<AccountDto> ParseAccountData(CancellationToken cancellationToken)
+        {
+            var accoutDir = Path.Combine(_options.DiaryDir, Constants.AccountPagesDir);
+            if (!Directory.Exists(accoutDir))
+            {
+                return null;
+            }
+            var accountDto = new AccountDto();
+
+            await _accountParser.ParseAccountData(accountDto, cancellationToken);
+            return accountDto;
         }
 
     }

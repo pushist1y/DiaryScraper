@@ -16,7 +16,7 @@ namespace DiaryScraperCore
         [JsonProperty("profile_access")]
         public string ProfileAccess { get; set; } = "0";
         [JsonProperty("journal_access")]
-        public string JournalAcceses { get; set; } = "0";
+        public string JournalAccess { get; set; } = "0";
         [JsonProperty("comment_access")]
         public string CommentAccess { get; set; } = "0";
         [JsonProperty("by_line")]

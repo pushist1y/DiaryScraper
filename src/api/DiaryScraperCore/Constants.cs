@@ -34,6 +34,7 @@ namespace DiaryScraperCore
 
     public static class AccountPagesFileNames
     {
+        public const string DiaryMain = "diary.htm";
         public const string MemberAccess = "member_access.htm";
         public const string DiaryAccess = "diary_access.htm";
         public const string DiaryCommentAccess = "diary_commentaccess.htm";

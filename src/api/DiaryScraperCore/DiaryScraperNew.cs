@@ -301,7 +301,7 @@ namespace DiaryScraperCore
         private async Task DownloadMetadataPages(CancellationToken cancellationToken)
         {
             var dr = new DiaryAccountPage() { Url = "http://www.diary.ru" };
-            dr.GenerateLocalPath("diary.htm");
+            dr.GenerateLocalPath(AccountPagesFileNames.DiaryMain);
             var dRes = await _downloader.Download(dr, false, _options.RequestDelay);
             var doc = await _parser.ParseAsync(dRes.DownloadedData.AsAnsiString());
             var href = doc.QuerySelector("a[title='профиль']").GetAttribute("href");
