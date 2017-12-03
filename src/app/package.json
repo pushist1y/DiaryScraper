@@ -75,7 +75,7 @@
     },
     "mac": {
       "category": "diary-scraper",
-      "target": ["dir"]
+      "target": ["dir", "dmg"]
     },
     "linux": {
       "category": "diary-scraper",
