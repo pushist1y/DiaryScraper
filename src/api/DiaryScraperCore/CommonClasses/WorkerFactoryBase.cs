@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Microsoft.EntityFrameworkCore;
 using NLog.Config;
 using NLog.Targets;
 
@@ -53,6 +54,17 @@ namespace DiaryScraperCore
             {
                 return null;
             }
+        }
+
+        protected ScrapeContext GetContext(string dbPath)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder();
+            optionsBuilder.UseSqlite($@"Data Source={dbPath}");
+            optionsBuilder.EnableSensitiveDataLogging();
+            var context = new ScrapeContext(optionsBuilder.Options);
+            context.Database.Migrate();
+
+            return context;
         }
     }
 

@@ -67,15 +67,12 @@ namespace DiaryScraperCore
             }
         }
 
+        
+
         private ScrapeContext GetContext(string workingDir, string diaryName)
         {
             var dbPath = Path.Combine(workingDir, diaryName, Constants.DbName);
-            var optionsBuilder = new DbContextOptionsBuilder();
-            optionsBuilder.UseSqlite($@"Data Source={dbPath}");
-            var context = new ScrapeContext(optionsBuilder.Options);
-            context.Database.Migrate();
-
-            return context;
+            return GetContext(dbPath);
         }
 
         private string GetDiaryName(string diaryUrl)

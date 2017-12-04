@@ -55,7 +55,7 @@ namespace DiaryScraperCore
         public IActionResult New()
         {
             var descriptor = new ArchiveTaskDescriptor();
-            descriptor.WorkingDir = @"d:\temp\scraper\6224\";
+            descriptor.WorkingDir = @"d:\temp\scraper\pushist1y\";
             _taskRunner.AddTask(descriptor);
             return Json(descriptor);
         }

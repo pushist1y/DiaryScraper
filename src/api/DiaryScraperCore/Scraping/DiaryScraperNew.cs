@@ -40,7 +40,11 @@ namespace DiaryScraperCore
             _context = context;
             _options = options;
             _downloadExistingChecker = new DownloadExistingChecker(Path.Combine(_options.WorkingDir, _options.DiaryName), context, _logger);
-            _downloader = new DataDownloader(Path.Combine(_options.WorkingDir, _options.DiaryName), _cookieContainer, _logger);
+            _downloader = new DataDownloader($"http://{_options.DiaryName}.diary.ru",
+                                        Path.Combine(_options.WorkingDir, _options.DiaryName),
+                                        _cookieContainer,
+                                        _logger);
+
             _downloader.BeforeDownload += (s, e) =>
             {
                 if (!(e.Resource is DiaryImage))
@@ -88,7 +92,7 @@ namespace DiaryScraperCore
             {
                 DownloadMetadataPages(cancellationToken).Wait();
             }
-            DownloadLastPostsPage().Wait();
+            DownloadLastPostsPage(cancellationToken).Wait();
 
             Progress.RangeDiscovered = true;
 
@@ -246,8 +250,10 @@ namespace DiaryScraperCore
 
             html = doc.GetHtml();
 
-            var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))", RegexOptions.IgnoreCase);
-            var imageUrls = matches.Select(m2 => m2.Groups[1].Value).ToList();
+            var imageUrls = doc.QuerySelectorAll("img").Select(i => i.GetAttribute("src")).Distinct().ToList();
+            imageUrls = FilterImageUrls(imageUrls).ToList();
+            // var matches = Regex.Matches(html, @"(https?:\/\/static.diary.ru[^\s""]*(gif|jpg|jpeg|png))", RegexOptions.IgnoreCase);
+            // var imageUrls = matches.Select(m2 => m2.Groups[1].Value).ToList();
             var diaryImages = await _downloadExistingChecker.FilterUrlsAsync<DiaryImage>(imageUrls.Distinct(), _options.Overwrite);
             foreach (var img in diaryImages)
             {
@@ -260,16 +266,59 @@ namespace DiaryScraperCore
         }
 
 
-        private async Task DownloadLastPostsPage()
+        private async Task DownloadLastPostsPage(CancellationToken cancellationToken)
         {
-            var url = "http://www.diary.ru/?last_post";
-            var page = await _downloadExistingChecker.CheckUrlAsync<DiaryAccountPage>(url, _options.Overwrite);
-            if (page == null)
+            var pages = new Dictionary<string, string>{
+                {"http://www.diary.ru/?last_post", AccountPagesFileNames.LastPosts},
+                {$"http://{_options.DiaryName}.diary.ru/?favorite", AccountPagesFileNames.Favorite},
+                {"/favicon.ico", AccountPagesFileNames.Favicon}
+            };
+
+            var sPages = await _downloadExistingChecker.FilterUrlsAsync<DiaryAccountPage>(pages.Keys, _options.Overwrite);
+            var cssUrls = new List<string>();
+            var imageUrls = new List<string>();
+
+            foreach (var sPage in sPages)
             {
-                return;
+                sPage.GenerateLocalPath(pages[sPage.Url]);
+                var dRes = await _downloader.Download(sPage, false, _options.RequestDelay);
+
+                using (var doc = await _parser.ParseAsync(dRes.DownloadedData.AsAnsiString()))
+                {
+                    cssUrls.AddRange(doc.QuerySelectorAll("link[rel='stylesheet']").Select(l => l.GetAttribute("href")));
+                    imageUrls.AddRange(doc.QuerySelectorAll("img").Select(i => i.GetAttribute("src")).Where(s => s.Contains("diary.ru") || s.StartsWith("/")));
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
             }
-            page.GenerateLocalPath(AccountPagesFileNames.LastPosts);
-            await _downloader.Download(page, false, _options.RequestDelay);
+
+            var cssPages = await _downloadExistingChecker.FilterUrlsAsync<DiaryAccountPage>(cssUrls, _options.Overwrite);
+            foreach (var cssPage in cssPages)
+            {
+                var guid = Guid.NewGuid().ToString("n");
+                cssPage.GenerateLocalPath($"style_{guid}.css");
+            }
+            await _downloader.Download(cssPages, false);
+
+            imageUrls = FilterImageUrls(imageUrls).ToList();
+            var images = await _downloadExistingChecker.FilterUrlsAsync<DiaryImage>(imageUrls, _options.Overwrite);
+            foreach (var img in images)
+            {
+                img.GenerateLocalPath(Guid.NewGuid().ToString("n") + "-");
+            }
+            await _downloader.Download(images, true, 0);
+
+            await _downloadExistingChecker.AddProcessedDataAsync(sPages as IEnumerable<DiaryAccountPage>);
+            await _downloadExistingChecker.AddProcessedDataAsync(cssPages as IEnumerable<DiaryAccountPage>);
+            await _downloadExistingChecker.AddProcessedDataAsync(images as IEnumerable<DiaryImage>);
+        }
+
+        private IEnumerable<string> FilterImageUrls(IEnumerable<string> imageUrls)
+        {
+            return imageUrls.Where(s =>
+                        !s.Contains("favicon.ico") &&
+                        (s.Contains("diary.ru") || (s.StartsWith("/") && !s.StartsWith("//")))
+            ).Distinct();
         }
 
         private async Task DownloadMetadataPages(CancellationToken cancellationToken)

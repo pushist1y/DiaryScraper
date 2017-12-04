@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,19 +15,23 @@ namespace DiaryScraperCore
         private readonly ILogger<DiaryArchiver> _logger;
         public ArchiveTaskProgress Progress = new ArchiveTaskProgress();
         private readonly ArchiveTaskDescriptor _descriptor;
+        private readonly ScrapeContext _context;
         private readonly HtmlParser _parser;
         private string DiaryDir => _descriptor.WorkingDir;
         private string ArchiveDir => Path.Combine(DiaryDir, Constants.ArchiveDir);
         private string PostsDir => Path.Combine(DiaryDir, Constants.PostsDir);
         private string ImagesDir => Path.Combine(DiaryDir, Constants.ImagesDir);
+        private string AccountPagesDir => Path.Combine(DiaryDir, Constants.AccountPagesDir);
         private string ArchivePostsDir => Path.Combine(ArchiveDir, Constants.PostsDir);
         private string ArchiveImagesDir => Path.Combine(ArchiveDir, Constants.ImagesDir);
-        public DiaryArchiver(ILogger<DiaryArchiver> logger, ArchiveTaskDescriptor descriptor)
+        private string ArchiveAccountDir => Path.Combine(ArchiveDir, Constants.AccountPagesDir);
+        public DiaryArchiver(ILogger<DiaryArchiver> logger, ArchiveTaskDescriptor descriptor, ScrapeContext context)
         {
             _logger = logger;
             _descriptor = descriptor;
             var config = new Configuration().WithCss();
             _parser = new HtmlParser(config);
+            _context = context;
         }
 
         protected override ILogger Logger => _logger;
@@ -39,10 +45,15 @@ namespace DiaryScraperCore
         {
             Directory.CreateDirectory(ArchivePostsDir);
             Directory.CreateDirectory(ArchiveImagesDir);
+            Directory.CreateDirectory(ArchiveAccountDir);
+
 
             CopyDir(PostsDir, ArchivePostsDir);
             cancellationToken.ThrowIfCancellationRequested();
             CopyDir(ImagesDir, ArchiveImagesDir);
+            CopyDir(AccountPagesDir, ArchiveAccountDir);
+
+
 
             var templatePath = Path.Combine(_descriptor.WorkingDir, Constants.AccountPagesDir, AccountPagesFileNames.LastPosts);
             var indexPath = Path.Combine(ArchiveDir, "index.htm");
@@ -71,10 +82,52 @@ namespace DiaryScraperCore
                     postDiv.ClassList.Remove("countFirst");
                     postDiv.ClassList.Remove("lastPost");
 
+                    var moreLinks = postDiv.QuerySelectorAll("a.LinkMore");
+                    foreach (var moreLink in moreLinks)
+                    {
+                        var linkId = moreLink.Id;
+                        var spanId = linkId.Substring(4);
+                        var spanEl = postDiv.QuerySelector($"#{spanId}");
+                        if (spanEl == null)
+                        {
+                            continue;
+                        }
+                        var guid = Guid.NewGuid().ToString("n");
+                        moreLink.Id = linkId + "_" + guid;
+                        spanEl.Id = spanId + "_" + guid;
+                    }
+
                     var newIndexDiv = indexDoc.CreateElement("div");
                     barDiv.Before(newIndexDiv);
                     newIndexDiv.OuterHtml = postDiv.OuterHtml;
                 }
+            }
+
+            foreach (var script in indexDoc.QuerySelectorAll("script"))
+            {
+                script.Remove();
+            }
+
+            var linkRefFiles = _context.AccountPages.Where(p => !p.Url.Contains(".htm")).ToDictionary(p => p.Url, p => p.LocalPath);
+            foreach (var link in indexDoc.QuerySelectorAll("link"))
+            {
+                if (!linkRefFiles.TryGetValue(link.GetAttribute("href"), out var localPath))
+                {
+                    continue;
+                }
+                var newUrl = localPath.Replace("\\", "/");
+                newUrl = "./" + newUrl;
+                link.SetAttribute("href", newUrl);
+            }
+
+            var imageFiles = _context.Images.ToDictionary(i => i.Url, i => "./" + i.RelativePath.Replace("\\", "/"));
+            foreach(var img in indexDoc.QuerySelectorAll("img"))
+            {
+                if(!imageFiles.TryGetValue(img.GetAttribute("src"), out var localPath))
+                {
+                    continue;
+                }
+                img.SetAttribute("src", localPath);
             }
 
             indexDoc.WriteToFile(indexPath, Encoding.GetEncoding(1251));

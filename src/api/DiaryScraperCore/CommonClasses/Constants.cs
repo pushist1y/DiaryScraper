@@ -47,5 +47,7 @@ namespace DiaryScraperCore
         public const string Geography = "geography.htm";
         public const string Owner = "owner.htm";
         public const string LastPosts = "lastposts.htm";
+        public const string Favorite = "favorite.htm";
+        public const string Favicon = "favicon.ico";
     }
 }

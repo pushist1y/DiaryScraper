@@ -17,11 +17,13 @@ namespace DiaryScraperCore
         private readonly string _diaryPath;
         private readonly CookieContainer _cookieContainer;
         private readonly ILogger _logger;
-        public DataDownloader(string diaryPath, CookieContainer cookieContainer, ILogger logger)
+        public string BaseUrl { get; set; }
+        public DataDownloader(string baseUrl, string diaryPath, CookieContainer cookieContainer, ILogger logger)
         {
             _diaryPath = diaryPath;
             _cookieContainer = cookieContainer;
             _logger = logger;
+            BaseUrl = baseUrl;
         }
 
         public async Task<DataDownloaderResult> Download(DownloadResource downloadResource, bool ignore404 = true, int requestDelay = 0)
@@ -31,7 +33,8 @@ namespace DiaryScraperCore
                 throw new ArgumentException("Для скачивания должны быть заполнены пути к данным");
             }
             _logger.LogInformation("Downloading data: " + downloadResource.Url);
-            var uri = new Uri(downloadResource.Url);
+
+            var uri = downloadResource.Url.StartsWith("htt") ? new Uri(downloadResource.Url) : new Uri(new Uri(BaseUrl), downloadResource.Url);
 
             var filePath = string.IsNullOrEmpty(downloadResource.RelativePath)
                             ? string.Empty
@@ -47,7 +50,7 @@ namespace DiaryScraperCore
             {
                 try
                 {
-                    
+
                     downloadedData = await client.DownloadDataTaskAsync(uri);
                     break; //i want to break freeeeee
                 }

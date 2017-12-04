@@ -18,7 +18,8 @@ namespace DiaryScraperCore
             try
             {
                 EnsureDirs(descriptor);
-                descriptor.Archiver = new DiaryArchiver(logger, descriptor);
+                var context = GetContext(descriptor);
+                descriptor.Archiver = new DiaryArchiver(logger, descriptor, context);
                 descriptor.Archiver.WorkFinished += (s, e) =>
                 {
                     UnsetLog(cfg);
@@ -53,6 +54,12 @@ namespace DiaryScraperCore
                 Directory.Delete(archivePath, true);
             }
             Directory.CreateDirectory(archivePath);
+        }
+
+        private ScrapeContext GetContext(ArchiveTaskDescriptor descriptor)
+        {
+            var scrapeDbPath = Path.Combine(descriptor.WorkingDir, Constants.DbName);
+            return GetContext(scrapeDbPath);
         }
     }
 }
