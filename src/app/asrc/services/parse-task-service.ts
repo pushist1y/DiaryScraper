@@ -1,32 +1,34 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { ScrapeTaskDescriptor, ParseTaskDescriptor } from "../common/scrape-task-descriptor";
+import { ScrapeTaskDescriptor, ParseTaskDescriptor, TaskDescriptorBase } from "../common/scrape-task-descriptor";
 import { Observable } from "rxjs/Observable";
+import { IRemoteProcessService, IRemoteProcessSericeStartArgs } from "./remote-service-interface";
 
 const httpOptions = {
     headers: new HttpHeaders({ 'Content-Type': 'application/json' })
 };
 
 @Injectable()
-export class ParseTaskService {
+export class ParseTaskService implements IRemoteProcessService {
     constructor(private http: HttpClient) {
 
     }
 
     private apiUrl: string = 'http://localhost:5000/api';
 
-    startParsing(task: ParseTaskDescriptor): Observable<ParseTaskDescriptor> {
+    startRemoteProcess(args: IRemoteProcessSericeStartArgs): Observable<TaskDescriptorBase> {
         let url = this.apiUrl + "/parse";
-        return this.http.post<ParseTaskDescriptor>(url, task, httpOptions);
+        return this.http.post<ParseTaskDescriptor>(url, args.descriptor, httpOptions);
     }
 
-    cancelParsing(guid: string): Observable<ParseTaskDescriptor>{
+    updateRemoteProcess(guid: string): Observable<TaskDescriptorBase> {
+        let url = this.apiUrl + "/parse/" + guid;
+        return this.http.get<ParseTaskDescriptor>(url);
+    }
+
+    cancelRemoteProcess(guid: string): Observable<TaskDescriptorBase> {
         let url = this.apiUrl + "/parse/" + guid;
         return this.http.delete<ParseTaskDescriptor>(url);
     }
 
-    updateParsing(guid: string): Observable<ParseTaskDescriptor>{
-        let url = this.apiUrl + "/parse/" + guid;
-        return this.http.get<ParseTaskDescriptor>(url);
-    }
 }
