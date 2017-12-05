@@ -33,6 +33,10 @@ import { ParseInputDataService } from '../services/parse-input-service';
 import { ValuesPipe } from '../services/values-pipe';
 import { DiaryParseProgressComponent } from './diary-parse-progress.component';
 import { ParseTaskService } from '../services/parse-task-service';
+import { DiaryArchiveInputComponent } from './diary-archive-input.component';
+import { ArchiveTaskService } from '../services/archive-task-service';
+import { ArchiveInputDataService } from '../services/archive-input-service';
+import { DiaryArchiveProgressComponent } from './diary-archive-progress.component';
 
 
 
@@ -44,7 +48,9 @@ import { ParseTaskService } from '../services/parse-task-service';
     DiaryProgressComponent,
     DiaryParseInputComponent,
     ValuesPipe,
-    DiaryParseProgressComponent
+    DiaryParseProgressComponent,
+    DiaryArchiveInputComponent,
+    DiaryArchiveProgressComponent
   ],
   imports: [
     BrowserModule,
@@ -71,7 +77,9 @@ import { ParseTaskService } from '../services/parse-task-service';
     ScrapeTaskService,
     AppStateService,
     ParseInputDataService,
-    ParseTaskService
+    ParseTaskService,
+    ArchiveTaskService,
+    ArchiveInputDataService
   ],
   bootstrap: [AppComponent]
 })

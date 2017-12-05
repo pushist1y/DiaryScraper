@@ -20,6 +20,7 @@ import { AppStateService } from '../services/appstate.service';
 
 })
 export class DiaryProgressComponent extends ProgressComponentBase implements OnInit {
+  menuEnabled: boolean = false;
   title: string = 'Выгрузка дневников';
 
   getServiceStartArgs(): IRemoteProcessSericeStartArgs {

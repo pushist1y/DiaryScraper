@@ -6,11 +6,11 @@ import { RemoteProcessServiceBase } from "./remote-task-service-base";
 
 
 @Injectable()
-export class ParseTaskService extends RemoteProcessServiceBase implements IRemoteProcessService {
+export class ArchiveTaskService extends RemoteProcessServiceBase implements IRemoteProcessService {
     constructor(http: HttpClient) {
         super(http);
     }
 
-    apiUrl: string = 'http://localhost:5000/api/parse/';
+    apiUrl: string = 'http://localhost:5000/api/archive/';
 
 }

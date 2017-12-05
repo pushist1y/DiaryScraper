@@ -6,10 +6,11 @@ import { AppStateService } from '../services/appstate.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ScrapeTaskDescriptor, TaskDescriptorBase } from '../common/scrape-task-descriptor';
 import { ApplicationState } from '../common/app-state';
+import { ComponentBase } from './component-base';
 
-export abstract class ProgressComponentBase {
-    @HostBinding('@routeAnimation') routeAnimation = true;
-    @HostBinding('style.display') display = 'block';
+
+
+export abstract class ProgressComponentBase extends ComponentBase {
     private progressModelBase: ProgressModelBase;
     public setProgressModel(progressModelBase: ProgressModelBase) {
         this.progressModelBase = progressModelBase;
@@ -19,8 +20,8 @@ export abstract class ProgressComponentBase {
 
     abstract getService(): IRemoteProcessService;
 
-    constructor(protected router: Router,
-        protected appStateService: AppStateService) {
+    constructor(router: Router, appStateService: AppStateService) {
+        super(router, appStateService);
         this.progressModelBase = new ProgressModelBase;
     }
 
@@ -95,38 +96,24 @@ export abstract class ProgressComponentBase {
             })
     }
 
-    
+
     abstract onResetClick();
-    abstract title: string;
 
     onCancelClick() {
         this.cancelTask();
     }
 
-    protected subscriptions: Array<Subscription> = new Array<Subscription>();
-    protected appState: ApplicationState = new ApplicationState();
 
 
 
     ngOnInit() {
-
-        let sub = this.appStateService.currentState.subscribe(newState => this.appState = newState);
-        this.subscriptions.push(sub);
-
-        this.appState.menuEnabled = false;
-        this.appState.title = this.title;
-        this.appStateService.changeState(this.appState);
-
+        super.ngOnInit();
         this.startWork();
     }
 
     ngOnDestroy() {
-        if (!this.subscriptions) {
-            return;
-        }
-        this.subscriptions.forEach((sub) => {
-            sub.unsubscribe();
-        });
+        super.ngOnDestroy();
+
         if (this.progressModelBase.subscription) {
             this.progressModelBase.subscription.unsubscribe();
             this.progressModelBase.subscription = null;

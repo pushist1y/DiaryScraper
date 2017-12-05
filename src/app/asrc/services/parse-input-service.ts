@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { DiaryScraperInputData } from '../common/diary-scraper-input-data';
 import { DiaryParserInputData } from '../common/diary-parser-input-data';
 
 @Injectable()
