@@ -15,6 +15,18 @@ namespace DiaryScraperCore
             Values[currentValueName] = 0;
             Values[totalValueName] = 0;
         }
+
+        public virtual void SetTotal(int total)
+        {
+            Values[_totalValueName] = total;
+            RangeDiscovered = true;
+        }
+
+        public virtual void Step(int step = 1)
+        {
+            IncrementInt(_currentValueName, step);
+        }
+
         public virtual int Percent
         {
             get
