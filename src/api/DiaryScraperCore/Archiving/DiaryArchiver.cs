@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -6,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
+using AngleSharp.Dom.Html;
 using AngleSharp.Parser.Html;
 using Microsoft.Extensions.Logging;
 
@@ -97,23 +99,19 @@ namespace DiaryScraperCore
                 Progress.Step();
                 using (var postDoc = await _parser.FromFileAsync(postFile, Encoding.GetEncoding(1251), cancellationToken))
                 {
-                    var postDiv = postDoc.QuerySelector("div.singlePost");
-                    if (postDiv == null)
+                    var sourcePostDiv = postDoc.QuerySelector("div.singlePost");
+                    if (sourcePostDiv == null)
                     {
                         continue;
                     }
 
-                    postDiv.ClassList.Remove("countSecond");
-                    postDiv.ClassList.Remove("countFirst");
-                    postDiv.ClassList.Remove("lastPost");
-
-                    var moreLinks = postDiv.QuerySelectorAll("a.LinkMore");
+                    var moreLinks = postDoc.QuerySelectorAll("a.LinkMore");
                     foreach (var moreLink in moreLinks)
                     {
                         moreLink.RemoveAttribute("onclick");
                         var linkId = moreLink.Id;
                         var spanId = linkId.Substring(4);
-                        var spanEl = postDiv.QuerySelector($"#{spanId}");
+                        var spanEl = postDoc.QuerySelector($"#{spanId}");
                         if (spanEl == null)
                         {
                             continue;
@@ -123,51 +121,107 @@ namespace DiaryScraperCore
                         spanEl.Id = spanId + "_" + guid;
                     }
 
-                    var newIndexDiv = indexDoc.CreateElement("div");
-                    barDiv.Before(newIndexDiv);
-                    newIndexDiv.OuterHtml = postDiv.OuterHtml;
+                    var newEl = indexDoc.CreateElement("div");
+                    newEl.InnerHtml = sourcePostDiv.OuterHtml;
+                    var postDiv = newEl.QuerySelector("div");
+                    barDiv.After(postDiv);
+
+                    postDiv.ClassList.Remove("countSecond");
+                    postDiv.ClassList.Remove("countFirst");
+                    postDiv.ClassList.Remove("lastPost");
+
+                    postDiv.QuerySelector("div.postLinksBackg.prevnext")?.Remove();
+                    var postLink = "./" + Constants.PostsDir + "/" + Path.GetFileName(postFile);
+                    var ul = postDiv.QuerySelector("ul.postLinks");
+                    if (ul != null)
+                    {
+                        var commentCount = postDoc.QuerySelectorAll(".singleComment").Count();
+                        ul.InnerHtml = $"<li class=\"comments\"><a href=\"{postLink}\"><span>Комментарии</span></a> <span class=\"comments_count_link\">(<a href=\"{postLink}\">{commentCount}</a>)</span></li>";
+                    }
+
+                    postDiv.QuerySelector(".postLinksBackg .urlLink a")?.SetAttribute("href", postLink);
+
+                    postDoc.QuerySelector("#addCommentArea")?.Remove();
+                    AddScripts(postDoc, "../");
+                    ReplaceImageSources(postDoc, "../");
+                    ReplaceLinkRef(postDoc, "../");
+
+                    postDoc.WriteToFile(postFile, Encoding.GetEncoding(1251));
                 }
             }
 
-            foreach (var script in indexDoc.QuerySelectorAll("script"))
+            AddScripts(indexDoc, "./");
+            ReplaceLinkRef(indexDoc, "./");
+            ReplaceImageSources(indexDoc, "./");
+
+            SetNav(indexDoc);
+
+            indexDoc.WriteToFile(indexPath, Encoding.GetEncoding(1251));
+        }
+
+
+        private Dictionary<string, string> _linkRefFiles = null;
+        private void ReplaceLinkRef(IHtmlDocument doc, string dirPrefix)
+        {
+            if (_linkRefFiles == null)
+            {
+                _linkRefFiles = _context.AccountPages.Where(p => !p.Url.Contains(".htm")).ToDictionary(p => p.Url, p => p.LocalPath);
+            }
+            foreach (var link in doc.QuerySelectorAll("link"))
+            {
+                if (!_linkRefFiles.TryGetValue(link.GetAttribute("href"), out var localPath))
+                {
+                    continue;
+                }
+                localPath = localPath.Replace("\\", "/");
+                localPath = dirPrefix + localPath;
+                link.SetAttribute("href", localPath);
+            }
+        }
+
+        private void AddScripts(IHtmlDocument doc, string dirPrefix)
+        {
+            foreach (var script in doc.QuerySelectorAll("script"))
             {
                 script.Remove();
             }
 
-            var scriptEl = indexDoc.CreateElement("script");
-            scriptEl.SetAttribute("type", "text/javascript");
-            scriptEl.SetAttribute("src", "./" + Constants.AccountPagesDir + "/jquery-3.2.1.min.js");
-            indexDoc.QuerySelector("head").AppendChild(scriptEl);
+            var scriptElPost = doc.CreateElement("script");
+            scriptElPost.SetAttribute("type", "text/javascript");
+            scriptElPost.SetAttribute("src", dirPrefix + Constants.AccountPagesDir + "/" + Constants.JQueryFileName);
+            doc.QuerySelector("head").AppendChild(scriptElPost);
 
-            scriptEl = indexDoc.CreateElement("script");
-            scriptEl.SetAttribute("type", "text/javascript");
-            scriptEl.SetAttribute("src", "./" + Constants.AccountPagesDir + "/diary-scraper.js");
-            indexDoc.QuerySelector("head").AppendChild(scriptEl);
+            scriptElPost = doc.CreateElement("script");
+            scriptElPost.SetAttribute("type", "text/javascript");
+            scriptElPost.SetAttribute("src", dirPrefix + Constants.AccountPagesDir + "/" + Constants.DiaryJsFileName);
+            doc.QuerySelector("head").AppendChild(scriptElPost);
+        }
 
-            var linkRefFiles = _context.AccountPages.Where(p => !p.Url.Contains(".htm")).ToDictionary(p => p.Url, p => p.LocalPath);
-            foreach (var link in indexDoc.QuerySelectorAll("link"))
+        private Dictionary<string, string> _imageFiles = null;
+        private void ReplaceImageSources(IHtmlDocument doc, string dirPrefix)
+        {
+            if (_imageFiles == null)
             {
-                if (!linkRefFiles.TryGetValue(link.GetAttribute("href"), out var localPath))
+                _imageFiles = _context.Images
+                                .Where(i => !string.IsNullOrEmpty(i.RelativePath))
+                                .ToDictionary(i => i.Url, i => i.RelativePath);
+                var fav = _context.AccountPages.FirstOrDefault(ap => ap.Url.Contains("favicon.ico"));
+                if (fav != null)
                 {
-                    continue;
+                    _imageFiles[fav.Url] = fav.RelativePath;
                 }
-                var newUrl = localPath.Replace("\\", "/");
-                newUrl = "./" + newUrl;
-                link.SetAttribute("href", newUrl);
             }
-
-            var imageFiles = _context.Images.ToDictionary(i => i.Url, i => "./" + i.RelativePath.Replace("\\", "/"));
-            foreach (var img in indexDoc.QuerySelectorAll("img"))
+            foreach (var img in doc.QuerySelectorAll("img"))
             {
                 img.RemoveAttribute("onload");
-                if (!imageFiles.TryGetValue(img.GetAttribute("src"), out var localPath))
+                if (!_imageFiles.TryGetValue(img.GetAttribute("src"), out var imagePath))
                 {
                     continue;
                 }
-                img.SetAttribute("src", localPath);
+                imagePath = imagePath.Replace("\\", "/");
+                imagePath = dirPrefix + imagePath;
+                img.SetAttribute("src", imagePath);
             }
-
-            indexDoc.WriteToFile(indexPath, Encoding.GetEncoding(1251));
         }
 
         private void CopyDir(string sourceDir, string destDir)
@@ -185,6 +239,52 @@ namespace DiaryScraperCore
             {
                 File.Copy(newPath, newPath.Replace(sourceDir, destDir), true);
             }
+        }
+
+        private void SetNav(IHtmlDocument indexDoc)
+        {
+            var tds = indexDoc.QuerySelectorAll("#pageBar tr.pages_str td");
+            var tdPrev = tds.First();
+            var tdNext = tds.Last();
+
+            var anchorPrev = indexDoc.CreateElement("a");
+            anchorPrev.TextContent = "< предыдущая";
+            anchorPrev.SetAttribute("href", "#");
+            anchorPrev.Id = "anchorPrev";
+            tdPrev.InnerHtml = "";
+            tdPrev.AppendChild(anchorPrev);
+
+            var anchorNext = indexDoc.CreateElement("a");
+            anchorNext.TextContent = "следующая >";
+            anchorNext.SetAttribute("href", "#");
+            anchorNext.Id = "anchorNext";
+            tdNext.InnerHtml = "";
+            tdNext.AppendChild(anchorNext);
+
+            var td = indexDoc.QuerySelectorAll("#pageBar tr").Last().QuerySelector("td");
+            td.InnerHtml = "";
+            td.Id = "tdPages";
+            var pageCount = Convert.ToInt32(Math.Ceiling(1.0 * indexDoc.QuerySelectorAll("div.singlePost").Count() / Constants.ArchivePageSize));
+            // for (var i = 1; i <= pageCount; i++)
+            // {
+            //     var pageAnchor = indexDoc.CreateElement(i == 1 ? "strong" : "a");
+            //     pageAnchor.InnerHtml = Convert.ToString(i);
+            //     pageAnchor.SetAttribute("href", $"#{i}");
+            //     pageAnchor.ClassList.Add("pageAnchor");
+            //     pageAnchor.SetAttribute("page", i.ToString());
+            //     td.AppendChild(pageAnchor);
+            // }
+
+            var script = indexDoc.CreateElement("script");
+            script.SetAttribute("type", "text/javascript");
+            script.InnerHtml = $@"
+            $(function(){{
+                initPages({Constants.ArchivePageSize}, {pageCount});
+            }});
+                
+            ";
+            indexDoc.QuerySelector("head").AppendChild(script);
+
         }
 
         public override void SetError(string error)

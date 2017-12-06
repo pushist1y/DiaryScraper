@@ -11,6 +11,9 @@ namespace DiaryScraperCore
         public const string ArchiveDir = "archive";
         public const string DbName = "scrape.db";
         public const int DownloadRetryCount = 3;
+        public const int ArchivePageSize = 20;
+        public const string JQueryFileName = "jquery-3.2.1.min.js";
+        public const string DiaryJsFileName = "diary-scraper.js";
 
         public static readonly List<string> SettingsUrls = new List<string>();
     }
