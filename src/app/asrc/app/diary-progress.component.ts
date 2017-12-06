@@ -1,41 +1,29 @@
-import { Component, OnInit, HostBinding, Pipe, PipeTransform } from '@angular/core';
-import { slideInDownAnimation } from "./animations"
-import { DataService } from '../services/data.service';
-import { DiaryScraperInputData } from '../common/diary-scraper-input-data';
-import { Router, NavigationEnd } from '@angular/router';
-import { ScrapeTaskService } from '../services/scrape-task-service';
-import { ScrapeTaskDescriptor } from '../common/scrape-task-descriptor';
 import { Observable, Subscription } from 'rxjs/Rx';
-import { HttpErrorResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { ApplicationState } from '../common/app-state';
+import { IRemoteProcessSericeStartArgs, IRemoteProcessService } from '../services/remote-service-interface';
+import { Component, OnInit } from '@angular/core';
+import { slideInDownAnimation } from './animations';
+import { ProgressComponentBase } from './progress-component-base';
+import { ScrapeTaskDescriptor } from '../common/scrape-task-descriptor';
+import { IRemoteProcessScrapingSericeStartArgs, ScrapeTaskService } from '../services/scrape-task-service';
+import { DiaryScraperInputData } from '../common/diary-scraper-input-data';
+import { DataService } from '../services/data.service';
+import { Router } from '@angular/router';
 import { AppStateService } from '../services/appstate.service';
+
 
 @Component({
   selector: 'app-diary-progress',
-  templateUrl: './diary-progress.component.html',
-  styleUrls: ['./diary-progress.component.css'],
+  templateUrl: './progress-component-base.html',
+  styleUrls: ['./progress-component-base.css'],
   animations: [slideInDownAnimation]
 
 })
-export class DiaryProgressComponent implements OnInit {
-  @HostBinding('@routeAnimation') routeAnimation = true;
-  @HostBinding('style.display') display = 'block';
+export class DiaryProgressComponent extends ProgressComponentBase implements OnInit {
+  menuEnabled: boolean = false;
+  title: string = 'Выгрузка дневников';
 
-
-  private inputData: DiaryScraperInputData;
-  constructor(private dataService: DataService,
-    private router: Router,
-    private appStateService: AppStateService,
-    private scrapeService: ScrapeTaskService) {
-    this.progressModel = new ProgressModel();
-  }
-
-  progressModel: ProgressModel;
-
-  startWork() {
-    this.progressModel.currentTask = null;
-
+  getServiceStartArgs(): IRemoteProcessSericeStartArgs {
     let newTask = new ScrapeTaskDescriptor();
     newTask.diaryUrl = `http://${this.inputData.diaryAddress}.diary.ru`;
     newTask.workingDir = this.inputData.workingDir;
@@ -50,122 +38,37 @@ export class DiaryProgressComponent implements OnInit {
       newTask.scrapeEnd = moment(this.inputData.dateEnd.value).utc().subtract(new Date().getTimezoneOffset(), 'm')
     }
 
-    this.scrapeService
-      .startScraping(newTask, this.inputData.diaryLogin, this.inputData.diaryPassword)
-      .subscribe(returnedTask => {
-        this.updateTaskData(returnedTask);
-        this.progressModel.inProgress = true;
-        this.progressModel.scheduler = Observable.interval(1000);
-        this.progressModel.subscription = this.progressModel.scheduler.subscribe((value: number) => {
-          this.refreshTask();
-        });
-      }, (error: HttpErrorResponse) => {
-        this.stopProgress();
-        this.progressModel.currentTask = newTask;
-        this.progressModel.currentTask.error = error.message;
-      });
+    let args = {
+      descriptor: newTask,
+      login: this.inputData.diaryLogin,
+      password: this.inputData.diaryPassword
+    } as IRemoteProcessScrapingSericeStartArgs
 
+    return args;
   }
 
-  refreshTask() {
-    if (!this.progressModel.inProgress || this.progressModel.currentTask === undefined || this.progressModel.isRefreshing) {
-      return;
-    }
-    this.progressModel.isRefreshing = true;
-    this.scrapeService
-      .updateScraping(this.progressModel.currentTask.guidString)
-      .subscribe((updatedTask: ScrapeTaskDescriptor) => {
-        this.updateTaskData(updatedTask);
-        if ((updatedTask.status && updatedTask.status >= 5) || !!updatedTask.error) {
-          this.stopProgress();
-        }
-        this.progressModel.isRefreshing = false;
-      }, (error: HttpErrorResponse) => {
-        this.stopProgress();
-        this.progressModel.currentTask.error = error.message;
-        this.progressModel.isRefreshing = false;
-      });
+  getService(): IRemoteProcessService {
+    return this.scrapeService;
   }
 
-  updateTaskData(newTask: ScrapeTaskDescriptor) {
-    this.progressModel.currentTask = newTask;
-  }
+  private inputData: DiaryScraperInputData;
+  constructor(private dataService: DataService,
+    router: Router,
+    appStateService: AppStateService,
+    private scrapeService: ScrapeTaskService) {
 
-  stopProgress() {
-    if (this.progressModel.subscription) {
-      this.progressModel.subscription.unsubscribe();
-      this.progressModel.subscription = null;
-    }
-    this.progressModel.scheduler = null;
-    this.progressModel.inProgress = false;
-  }
-
-  cancelTask() {
-    if (!this.progressModel.inProgress || this.progressModel.currentTask === undefined) {
-      return;
-    }
-    this.progressModel.isCancelling = true;
-    this.stopProgress();
-    this.scrapeService.cancelScraping(this.progressModel.currentTask.guidString)
-      .subscribe((cancelledTask: ScrapeTaskDescriptor) => {
-        this.updateTaskData(cancelledTask);
-        this.progressModel.isCancelling = false;
-      }, (error: HttpErrorResponse) => {
-        this.progressModel.isCancelling = false;
-        this.progressModel.currentTask.error = error.message;
-      })
+    super(router, appStateService);
   }
 
   onResetClick() {
     this.router.navigateByUrl("/input");
   }
 
-  onCancelClick() {
-    this.cancelTask();
-  }
-
-  private subscriptions: Array<Subscription> = new Array<Subscription>();
-  private appState: ApplicationState = new ApplicationState();
-
   ngOnInit() {
     var sub = this.dataService.currentData.subscribe(inputaData => this.inputData = inputaData);
     this.subscriptions.push(sub);
-
-    sub = this.appStateService.currentState.subscribe(newState => this.appState = newState);
-    this.subscriptions.push(sub);
-
-    this.appState.menuEnabled = false;
-    this.appState.title = 'Выгрузка дневников';
-    this.appStateService.changeState(this.appState);
-
-    this.startWork();
-  }
-
-  ngOnDestroy() {
-    if (!this.subscriptions) {
-      return;
-    }
-    this.subscriptions.forEach((sub) => {
-      sub.unsubscribe();
-    });
-    if(this.progressModel.subscription)
-    {
-      this.progressModel.subscription.unsubscribe();
-      this.progressModel.subscription = null;
-    }
+    super.ngOnInit();
   }
 
 }
 
-
-export class ProgressModelBase {
-  inProgress: boolean = false;
-  scheduler: Observable<number>;
-  subscription: Subscription;
-  isCancelling: boolean = false;
-  isRefreshing: boolean = false;
-}
-
-class ProgressModel extends ProgressModelBase {
-  currentTask: ScrapeTaskDescriptor;
-}

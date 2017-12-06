@@ -11,56 +11,6 @@ using NLog.Targets;
 
 namespace DiaryScraperCore
 {
-    public class WorkerFactoryBase
-    {
-        protected readonly IServiceProvider _serviceProvider;
-        public WorkerFactoryBase(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
-        protected void UnsetLog(NLogScrapeConfig config)
-        {
-            try
-            {
-                if (config.Target != null)
-                {
-                    NLog.LogManager.Configuration.RemoveTarget(config.Target.Name);
-                }
-                if (config.Rule != null)
-                {
-                    NLog.LogManager.Configuration.LoggingRules.Remove(config.Rule);
-                }
-                NLog.LogManager.ReconfigExistingLoggers();
-            }
-            catch
-            {
-                //ignore exception
-            }
-        }
-        protected NLogScrapeConfig ConfigureLog(string workingDir)
-        {
-            try
-            {
-                var cfg = new NLogScrapeConfig();
-                cfg.Target = new FileTarget();
-                cfg.Target.Name = "errorTarget_" + Guid.NewGuid().ToString("n");
-                cfg.Target.FileName = Path.Combine(workingDir, "${shortdate}.log");
-                cfg.Target.Layout = @"${date:format=dd.MM.yyyy HH\:mm\:ss} (${level:uppercase=true}): ${message}. ${exception:format=ToString}";
-                NLog.LogManager.Configuration.AddTarget(cfg.Target);
-
-                cfg.Rule = new LoggingRule("DiaryScraperCore*", NLog.LogLevel.Warn, cfg.Target);
-                NLog.LogManager.Configuration.LoggingRules.Add(cfg.Rule);
-
-                NLog.LogManager.ReconfigExistingLoggers();
-                return cfg;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-    }
     public class DiaryScraperFactory : WorkerFactoryBase
     {
 
@@ -101,7 +51,7 @@ namespace DiaryScraperCore
 
                 var scraper = new DiaryScraperNew(logger, context, options);
 
-                scraper.ScrapeFinished += (s, e) =>
+                scraper.WorkFinished += (s, e) =>
                 {
                     UnsetLog(cfg);
                 };
@@ -117,15 +67,12 @@ namespace DiaryScraperCore
             }
         }
 
+        
+
         private ScrapeContext GetContext(string workingDir, string diaryName)
         {
             var dbPath = Path.Combine(workingDir, diaryName, Constants.DbName);
-            var optionsBuilder = new DbContextOptionsBuilder();
-            optionsBuilder.UseSqlite($@"Data Source={dbPath}");
-            var context = new ScrapeContext(optionsBuilder.Options);
-            context.Database.Migrate();
-
-            return context;
+            return GetContext(dbPath);
         }
 
         private string GetDiaryName(string diaryUrl)
@@ -162,32 +109,9 @@ namespace DiaryScraperCore
                     Directory.CreateDirectory(dir);
                 }
             }
-            
+
         }
     }
 
-    public class DiaryParserFactory : WorkerFactoryBase
-    {
-        private readonly ILogger<DiaryParser> _logger;
-        public DiaryParserFactory(IServiceProvider serviceProvider, ILogger<DiaryParser> logger) : base(serviceProvider)
-        {
-            _logger = logger;
-        }
 
-        public DiaryParser GetParser(ParseTaskDescriptor descriptor)
-        {
-            var options = new DiaryParserOptions();
-            options.DiaryDir = descriptor.WorkingDir;
-
-            descriptor.Parser = new DiaryParser(options, _logger);
-
-            return descriptor.Parser;
-        }
-    }
-
-    public class NLogScrapeConfig
-    {
-        public FileTarget Target { get; set; }
-        public LoggingRule Rule { get; set; }
-    }
 }

@@ -1,37 +1,33 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { ScrapeTaskDescriptor } from "../common/scrape-task-descriptor";
+import { ScrapeTaskDescriptor, TaskDescriptorBase } from "../common/scrape-task-descriptor";
 import { Observable } from "rxjs/Observable";
+import { IRemoteProcessSericeStartArgs, IRemoteProcessService } from "./remote-service-interface";
+import { RemoteProcessServiceBase } from "./remote-task-service-base";
 
-const httpOptions = {
-    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
-};
+
+
+
+export interface IRemoteProcessScrapingSericeStartArgs extends IRemoteProcessSericeStartArgs {
+    login: string;
+    password: string;
+}
 
 @Injectable()
-export class ScrapeTaskService {
-    constructor(private http: HttpClient) {
+export class ScrapeTaskService extends RemoteProcessServiceBase implements IRemoteProcessService {
 
+    apiUrl: string = 'http://localhost:5000/api/scrape/';
+
+    constructor(http: HttpClient) {
+        super(http);
     }
 
-    private apiUrl: string = 'http://localhost:5000/api';
-
-
-    startScraping(task: ScrapeTaskDescriptor, login: string, password: string): Observable<ScrapeTaskDescriptor> {
-        let url = this.apiUrl + "/scrape";
+    startRemoteProcess(args: IRemoteProcessScrapingSericeStartArgs): Observable<TaskDescriptorBase> {
+        let url = this.apiUrl;
         let params = new URLSearchParams();
-        params.set("login", login);
-        params.set("password", password);
+        params.set("login", args.login);
+        params.set("password", args.password);
         url += "?" + params.toString();
-        return this.http.post<ScrapeTaskDescriptor>(url, task, httpOptions);
-    }
-
-    cancelScraping(guid: string): Observable<ScrapeTaskDescriptor>{
-        let url = this.apiUrl + "/scrape/" + guid;
-        return this.http.delete<ScrapeTaskDescriptor>(url);
-    }
-
-    updateScraping(guid: string): Observable<ScrapeTaskDescriptor>{
-        let url = this.apiUrl + "/scrape/" + guid;
-        return this.http.get<ScrapeTaskDescriptor>(url);
+        return this.http.post<ScrapeTaskDescriptor>(url, args.descriptor, this.httpOptions);
     }
 }

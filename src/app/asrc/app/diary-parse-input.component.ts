@@ -7,6 +7,7 @@ import { ApplicationState } from '../common/app-state';
 import { DiaryParserInputData } from '../common/diary-parser-input-data';
 import { ParseInputDataService } from '../services/parse-input-service';
 import { FormControl } from '@angular/forms';
+import { ComponentBase } from './component-base';
 
 declare var electron: Electron.AllElectron;
 
@@ -19,41 +20,26 @@ const dialog = electron.remote.dialog;
   styleUrls: ['./diary-parse-input.component.css'],
   animations: [slideInDownAnimation]
 })
-export class DiaryParseInputComponent implements OnInit {
+export class DiaryParseInputComponent extends ComponentBase implements OnInit {
+  title: string = 'Обработка данных';
+  menuEnabled: boolean = true;
 
-  constructor(private router: Router,
-    private appStateService: AppStateService,
-    private parseInputService: ParseInputDataService) {
+  constructor(router: Router,
+    appStateService: AppStateService,
+    protected parseInputService: ParseInputDataService) {
+    super(router, appStateService)
 
   }
 
-  @HostBinding('@routeAnimation') routeAnimation = true;
-  @HostBinding('style.display') display = 'block';
-
-  private subscriptions: Array<Subscription> = new Array<Subscription>();
-  private appState: ApplicationState = new ApplicationState();
   parseInputData: DiaryParserInputData = new DiaryParserInputData();
 
   ngOnInit() {
     var sub = this.parseInputService.currentData.subscribe(newParseData => this.parseInputData = newParseData);
     this.subscriptions.push(sub);
-
-    sub = this.appStateService.currentState.subscribe(newState => this.appState = newState);
-    this.subscriptions.push(sub);
-
-    this.appState.menuEnabled = true;
-    this.appState.title = 'Обработка данных';
-    this.appStateService.changeState(this.appState);
+    super.ngOnInit();
   }
 
-  ngOnDestroy() {
-    if (!this.subscriptions) {
-      return;
-    }
-    this.subscriptions.forEach((sub) => {
-      sub.unsubscribe();
-    })
-  }
+  
 
   onDiaryDirectoryButtonClick(workingDirFormControl: FormControl) {
     let paths = dialog.showOpenDialog(currentWindow, {

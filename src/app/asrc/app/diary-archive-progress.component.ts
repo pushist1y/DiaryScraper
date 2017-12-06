@@ -4,27 +4,30 @@ import { AppStateService } from '../services/appstate.service';
 import { Router } from '@angular/router';
 import { Observable, Subscription } from 'rxjs/Rx';
 import { ApplicationState } from '../common/app-state';
-import { ParseTaskDescriptor } from '../common/scrape-task-descriptor';
+import { ParseTaskDescriptor, ArchiveTaskDescriptor } from '../common/scrape-task-descriptor';
 import { ParseTaskService } from '../services/parse-task-service';
 import { ParseInputDataService } from '../services/parse-input-service';
 import { DiaryParserInputData } from '../common/diary-parser-input-data';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProgressComponentBase } from './progress-component-base';
 import { IRemoteProcessService, IRemoteProcessSericeStartArgs } from '../services/remote-service-interface';
+import { ArchiveTaskService } from '../services/archive-task-service';
+import { ArchiveInputDataService } from '../services/archive-input-service';
+import { DiaryArchiverInputData } from '../common/diary-archiver-input-data';
 
 @Component({
-  selector: 'app-diary-parse-progress',
+  selector: 'app-diary-archive-progress',
   templateUrl: './progress-component-base.html',
   styleUrls: ['./progress-component-base.css'],
   animations: [slideInDownAnimation]
 })
-export class DiaryParseProgressComponent extends ProgressComponentBase implements OnInit {
+export class DiaryArchiveProgressComponent extends ProgressComponentBase implements OnInit {
   menuEnabled: boolean = false;
-  title: string = "Обработка данных";
+  title: string = "Архивирование данных";
 
   getServiceStartArgs(): IRemoteProcessSericeStartArgs {
-    let newTask = new ParseTaskDescriptor();
-    newTask.workingDir = this.parseInputData.diaryDir;
+    let newTask = new ArchiveTaskDescriptor();
+    newTask.workingDir = this.archiveInputData.diaryDir;
     return {
       descriptor: newTask
     } as IRemoteProcessSericeStartArgs;
@@ -32,20 +35,20 @@ export class DiaryParseProgressComponent extends ProgressComponentBase implement
 
 
   getService(): IRemoteProcessService {
-    return this.parseService;
+    return this.archiveTaskService;
   }
   constructor(router: Router,
     appStateService: AppStateService,
-    private parseService: ParseTaskService,
-    private parseInputService: ParseInputDataService) {
+    private archiveTaskService: ArchiveTaskService,
+    private archiveInputDataService: ArchiveInputDataService) {
     super(router, appStateService)
   }
 
-  parseInputData: DiaryParserInputData;
+  archiveInputData: DiaryArchiverInputData;
 
   ngOnInit() {
 
-    var sub = this.parseInputService.currentData.subscribe(newParseData => this.parseInputData = newParseData);
+    var sub = this.archiveInputDataService.currentData.subscribe(newData => this.archiveInputData = newData);
     this.subscriptions.push(sub);
 
     super.ngOnInit();
@@ -53,7 +56,7 @@ export class DiaryParseProgressComponent extends ProgressComponentBase implement
   }
 
   onResetClick() {
-    this.router.navigateByUrl("/parse");
+    this.router.navigateByUrl("/archive");
   }
 
 }

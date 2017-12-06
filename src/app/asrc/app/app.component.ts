@@ -37,4 +37,8 @@ export class AppComponent {
   parseClick() {
     this.router.navigateByUrl("/parse");
   }
+
+  archiveClick(){
+    this.router.navigateByUrl("/archive");
+  }
 }

@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DiaryParseProgressComponent } from './diary-parse-progress.component';
+import { DiaryArchiveInputComponent } from './diary-archive-input.component';
 
-describe('DiaryParseProgressComponent', () => {
-  let component: DiaryParseProgressComponent;
-  let fixture: ComponentFixture<DiaryParseProgressComponent>;
+describe('DiaryArchiveInputComponent', () => {
+  let component: DiaryArchiveInputComponent;
+  let fixture: ComponentFixture<DiaryArchiveInputComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DiaryParseProgressComponent ]
+      declarations: [ DiaryArchiveInputComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DiaryParseProgressComponent);
+    fixture = TestBed.createComponent(DiaryArchiveInputComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

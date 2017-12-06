@@ -9,8 +9,8 @@ namespace DiaryScraperCore.Controllers
 
     public class ScrapeController : Controller
     {
-        private readonly TaskRunner _taskRunner;
-        public ScrapeController(TaskRunner taskRunner)
+        private readonly ScrapeTaskRunner _taskRunner;
+        public ScrapeController(ScrapeTaskRunner taskRunner)
         {
             _taskRunner = taskRunner;
         }

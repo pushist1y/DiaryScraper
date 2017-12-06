@@ -29,4 +29,14 @@
     <Content Update="nlog.config" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+      <Content Remove="Resources/jquery-3.2.1.min.js" />
+      <Content Remove="Resources/diary-scraper.js" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="Resources/jquery-3.2.1.min.js" />
+    <EmbeddedResource Include="Resources/diary-scraper.js" />
+  </ItemGroup>
+
 </Project>

@@ -24,6 +24,10 @@ export class ParseTaskDescriptor extends TaskDescriptorBase {
 
 }
 
+export class ArchiveTaskDescriptor extends TaskDescriptorBase {
+
+}
+
 
 
 export class TaskProgress {

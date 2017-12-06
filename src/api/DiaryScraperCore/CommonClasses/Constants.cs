@@ -8,8 +8,12 @@ namespace DiaryScraperCore
         public const string PostsDir = "posts";
         public const string PostEditsDir = "postedits";
         public const string AccountPagesDir = "accountpages";
+        public const string ArchiveDir = "archive";
         public const string DbName = "scrape.db";
         public const int DownloadRetryCount = 3;
+        public const int ArchivePageSize = 20;
+        public const string JQueryFileName = "jquery-3.2.1.min.js";
+        public const string DiaryJsFileName = "diary-scraper.js";
 
         public static readonly List<string> SettingsUrls = new List<string>();
     }
@@ -32,6 +36,7 @@ namespace DiaryScraperCore
         public const string CurrentFile = "Текущий файл";
     }
 
+
     public static class AccountPagesFileNames
     {
         public const string DiaryMain = "diary.htm";
@@ -44,5 +49,8 @@ namespace DiaryScraperCore
         public const string Profile = "profile.htm";
         public const string Geography = "geography.htm";
         public const string Owner = "owner.htm";
+        public const string LastPosts = "lastposts.htm";
+        public const string Favorite = "favorite.htm";
+        public const string Favicon = "favicon.ico";
     }
 }

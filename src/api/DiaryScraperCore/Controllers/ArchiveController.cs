@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace DiaryScraperCore
 {
     [Route("api/[controller]")]
-    public class ParseController : Controller
+    public class ArchiveController : Controller
     {
-        private readonly ParseTaskRunner _taskRunner;
-        public ParseController(ParseTaskRunner taskRunner)
+        private readonly ArchiveTaskRunner _taskRunner;
+        public ArchiveController(ArchiveTaskRunner taskRunner)
         {
             _taskRunner = taskRunner;
         }
@@ -18,11 +18,11 @@ namespace DiaryScraperCore
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] ParseTaskDescriptor descriptor)
+        public IActionResult Post([FromBody] ArchiveTaskDescriptor descriptor)
         {
            if (_taskRunner.TasksView.Any(t => t.IsRunning))
             {
-                descriptor.SetError("Операция по скачиванию дневника уже выполняется");
+                descriptor.SetError("Операция по архивированию дневника уже выполняется");
                 return Json(descriptor);
             }
             _taskRunner.AddTask(descriptor);
@@ -51,5 +51,13 @@ namespace DiaryScraperCore
             return Json(task);
         }
 
+        [HttpGet("new")]
+        public IActionResult New()
+        {
+            var descriptor = new ArchiveTaskDescriptor();
+            descriptor.WorkingDir = @"d:\temp\scraper\pushist1y\";
+            _taskRunner.AddTask(descriptor);
+            return Json(descriptor);
+        }
     }
 }

@@ -30,11 +30,21 @@ namespace DiaryScraperCore
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            services.AddSingleton<TaskRunner>();
-            services.AddSingleton<ParseTaskRunner>();
-            services.AddTransient<DiaryScraperFactory>();
-            services.AddTransient<DiaryParserFactory>();
-            services.AddDbContext<ScrapeContext>((options) => {
+
+            foreach (var runnerType in this.GetType().Assembly.GetTypes()
+                .Where(t => t.IsSubclassOfRawGeneric(typeof(TaskRunnerBase<>)))
+                .Where(t => t != typeof(TaskRunnerBase<>)))
+            {
+                services.AddSingleton(runnerType);
+            }
+
+            foreach (var factoryType in this.GetType().Assembly.GetTypes().Where(t => t.IsSubclassOf(typeof(WorkerFactoryBase))))
+            {
+                services.AddTransient(factoryType);
+            }
+
+            services.AddDbContext<ScrapeContext>((options) =>
+            {
                 options.UseSqlite("Data Source=scrape.db");
             });
         }
@@ -57,8 +67,9 @@ namespace DiaryScraperCore
 
             app.AddNLogWeb();
 
-            if(NLog.LogManager.Configuration == null){
-                 NLog.LogManager.Configuration= new LoggingConfiguration();
+            if (NLog.LogManager.Configuration == null)
+            {
+                NLog.LogManager.Configuration = new LoggingConfiguration();
             }
         }
     }
