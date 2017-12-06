@@ -7,12 +7,12 @@ CloudFlare bypassing codes credit goes to [Corwin75](https://github.com/Corwin75
 ## Где скачать
 Актуальные бинарники обитают [здесь](http://static.terribles.ru/scraper/)
 Доступные дистрибутивы:
-diary-scraper Setup x.x.x.exe - Инсталлятор под Windows x64
-diary-scraper Setup x.x.x-ia32.exe - Инсталлятор под Windows x86
-diary-scraper-x.x.x-win.zip - Архив с программой под Windows x64
-diary-scraper-x.x.x-ia32-win.zip - Архив с программой под Windows x86
-diary-scraper-x.x.x.tar.gz - Архив с программой под Linux x64 (проверено на Linux Mint 18)
-diary-scraper-x.x.x.dmg - Пакет с программой под OsX (поддерживаются версии 10.12 и более поздние)
+* diary-scraper Setup x.x.x.exe - Инсталлятор под Windows x64
+* diary-scraper Setup x.x.x-ia32.exe - Инсталлятор под Windows x86
+* diary-scraper-x.x.x-win.zip - Архив с программой под Windows x64
+* diary-scraper-x.x.x-ia32-win.zip - Архив с программой под Windows x86
+* diary-scraper-x.x.x.tar.gz - Архив с программой под Linux x64 (проверено на Linux Mint 18)
+* diary-scraper-x.x.x.dmg - Пакет с программой под OsX (поддерживаются версии 10.12 и более поздние)
 
 
 ## Краткая инструкция
