@@ -11,7 +11,7 @@ import { ComponentBase } from './component-base';
 
 
 export abstract class ProgressComponentBase extends ComponentBase {
-    private progressModelBase: ProgressModelBase;
+    progressModelBase: ProgressModelBase;
     public setProgressModel(progressModelBase: ProgressModelBase) {
         this.progressModelBase = progressModelBase;
     }
