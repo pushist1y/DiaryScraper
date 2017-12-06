@@ -38,7 +38,7 @@ namespace DiaryScraperCore
                 var options = new DiaryScraperOptions
                 {
                     WorkingDir = descriptor.WorkingDir,
-                    DiaryName = diaryName,
+                    DiaryName = diaryName.ToLower(),
                     Login = login,
                     Password = password,
                     RequestDelay = descriptor.RequestDelay,
