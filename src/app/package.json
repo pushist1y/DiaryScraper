@@ -1,12 +1,12 @@
 {
   "name": "diary-scraper",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "title": "Скачать дневник",
   "description": "Scraper for diary.ru blogs",
   "author": {
-    "name": "Anton Evseev",
+    "name": "Анон Михалыч",
     "email": "mister.p.sh@gmail.com",
-    "url": "http://terribles.ru"
+    "url": "https://github.com/pushist1y"
   },
   "repository": "https://github.com/pushist1y/DiaryScraper",
   "main": "main.js",

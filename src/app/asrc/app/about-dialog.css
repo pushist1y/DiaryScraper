@@ -9,12 +9,12 @@
     font-size: smaller;
 }
 
-title.h2{
+h2.title{
     margin-bottom: 0;
 }
 
 .aboutInfo{
-    margin-top: 6px;
+    margin-top: 8px;
     font-size: small;
 }
 
@@ -24,4 +24,9 @@ a:link {
 
 a:hover {
     text-decoration: underline;
+}
+
+ul{
+    padding-left: 22px;
+    margin-top: 0;
 }
