@@ -1,0 +1,27 @@
+.container {
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.version{
+    color: lightgray;
+    font-size: smaller;
+}
+
+title.h2{
+    margin-bottom: 0;
+}
+
+.aboutInfo{
+    margin-top: 6px;
+    font-size: small;
+}
+
+a:link {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}

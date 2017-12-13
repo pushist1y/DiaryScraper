@@ -1,5 +1,5 @@
 <!--The content below is only a placeholder and can be replaced.-->
-<div fxFlexFill fxLayout="row">
+<div fxFlexFill fxLayout="row" class="mat-typography">
   <div fxFlex="17" fxFlexOffset="8" fxFlexAlign="center">
     <div *ngIf="appState.menuEnabled">
       <button mat-icon-button [matMenuTriggerFor]="menu">
@@ -19,14 +19,23 @@
           <mat-icon>attach_file</mat-icon>
           <span>Архивирование</span>
         </button>
+        <button mat-menu-item (click)="aboutClick()">
+          <mat-icon>info_outline</mat-icon>
+          <span>О программе</span>
+        </button>
       </mat-menu>
     </div>
   </div>
-  <div fxFlex fxFlexOffset="5">
+  <div fxFlex fxFlexOffset="3" fxFlexAlign="center">
     <h1>
       {{appState.title}}
     </h1>
   </div>
+  <div fxFlex="15" fxFlexOffset="3">
+    <img src="./angular_assets/dybr_logo.svg" width="100%"/>
+  </div>
+
+  <div fxFlex="2"></div>
 
 </div>
 

@@ -6,7 +6,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatMomentDateModule } from '@angular/material-moment-adapter';
 import { MomentValidateExactDirective } from '../directives/moment-validate-exact.directive';
 
-import { AppComponent } from './app.component';
+import { AppComponent, DialogOverviewExampleDialog } from './app.component';
 import { DiaryInputComponent } from './diaryinput.component';
 
 import {
@@ -19,7 +19,8 @@ import {
   MatCheckboxModule,
   MatDatepickerModule,
   MatProgressBarModule,
-  MatMenuModule
+  MatMenuModule,
+  MatDialogModule
 
 } from '@angular/material';
 import { AppRoutingModule } from './app-routing.module';
@@ -50,7 +51,8 @@ import { DiaryArchiveProgressComponent } from './diary-archive-progress.componen
     ValuesPipe,
     DiaryParseProgressComponent,
     DiaryArchiveInputComponent,
-    DiaryArchiveProgressComponent
+    DiaryArchiveProgressComponent,
+    DialogOverviewExampleDialog
   ],
   imports: [
     BrowserModule,
@@ -70,7 +72,8 @@ import { DiaryArchiveProgressComponent } from './diary-archive-progress.componen
     AppRoutingModule,
     HttpClientModule,
     MatProgressBarModule,
-    MatMenuModule
+    MatMenuModule,
+    MatDialogModule
   ],
   providers: [
     DataService,
@@ -81,6 +84,7 @@ import { DiaryArchiveProgressComponent } from './diary-archive-progress.componen
     ArchiveTaskService,
     ArchiveInputDataService
   ],
+  entryComponents: [DialogOverviewExampleDialog],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
