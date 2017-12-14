@@ -3,7 +3,7 @@ window.os = require('os');
 window.electron = require('electron');
 window.packageJson = require('../package.json');
 
-let shell = window.electron.shell;
+var shell = window.electron.shell;
 
 document.addEventListener('click', function (event) {
   event = event || window.event;
