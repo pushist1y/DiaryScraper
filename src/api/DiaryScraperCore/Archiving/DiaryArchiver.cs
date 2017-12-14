@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AngleSharp;
@@ -105,6 +106,8 @@ namespace DiaryScraperCore
                         continue;
                     }
 
+                    //ReplaceDiaryMediaIframes(postDoc);
+
                     var moreLinks = postDoc.QuerySelectorAll("a.LinkMore");
                     foreach (var moreLink in moreLinks)
                     {
@@ -179,6 +182,30 @@ namespace DiaryScraperCore
             }
         }
 
+        private void ReplaceDiaryMediaIframes(IHtmlDocument doc)
+        {
+            var frames = (from frame in  doc.QuerySelectorAll("iframe")
+            let src = frame.GetAttribute("src")
+            where !string.IsNullOrEmpty(src) && src.Contains("diary-media.ru")
+            select frame).ToList();
+            
+            foreach(var frame in frames)
+            {
+                var src = frame.GetAttribute("src");
+                Console.WriteLine(src);
+                var match = Regex.Match(src, @"diary-media\.ru\/\?(.*)$");
+                if(!match.Success)
+                {
+                    continue;
+                }
+                var base64Part = match.Groups[1].Value;
+                var decodedData = Convert.FromBase64String(base64Part);
+                var decodedString = Encoding.UTF8.GetString(decodedData);
+                Console.WriteLine(decodedString);
+            }
+            
+        }
+
         private void AddScripts(IHtmlDocument doc, string dirPrefix)
         {
             foreach (var script in doc.QuerySelectorAll("script"))
@@ -213,6 +240,10 @@ namespace DiaryScraperCore
             }
             foreach (var img in doc.QuerySelectorAll("img"))
             {
+                if(!img.HasAttribute("src"))
+                {
+                    continue;
+                }
                 img.RemoveAttribute("onload");
                 if (!_imageFiles.TryGetValue(img.GetAttribute("src"), out var imagePath))
                 {
