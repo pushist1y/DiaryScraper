@@ -1,0 +1,45 @@
+<div class="container mat-typography">
+  <div fxFlexFill fxLayout="row">
+    <div fxFlex="70" fxFlexAlign="center">
+      <h2 class="title">Diary Scraper</h2>
+    </div>
+    <div fxFlex>
+      <a href="http://dybr.ru">
+        <img src="./angular_assets/dybr_logo.svg" width="100%" />
+      </a>
+    </div>
+  </div>
+  <div class="version">Версия {{getVersion()}}</div>
+  <div class="aboutInfo">
+    Приложение для выгрузки и архивирования дневников с сайта
+    <a href="http://diary.ru">Diary</a>.
+  </div>
+  <div class="aboutInfo">
+    Специально для проекта
+    <a href="http://dybr.ru">Дыбр</a>.
+  </div>
+  <div class="aboutInfo">
+    Программа распространяется по лицензии
+    <a href="https://github.com/pushist1y/DiaryScraper/blob/master/LICENSE">MIT</a>.
+  </div>
+  <div class="aboutInfo">
+    Исходные коды, а также инструкция по использованию, история изменений и ссылки на новые версии, доступны на
+    <a href="https://github.com/pushist1y/DiaryScraper">GitHub</a>
+  </div>
+  <div class="aboutInfo">
+    Связаться с автором:
+    <ul>
+      <li>Telegram:
+        <a href="https://t.me/pushist1y">@pushist1y</a>
+      </li>
+      <li>E-mail:
+        <a href="mailto:mister.p.sh@gmail.com">mister.p.sh@gmail.com</a>
+      </li>
+    </ul>
+  </div>
+  <div fxFlexFill fxLayout="row">
+    <div fxFlex="20" fxFlexOffset="80">
+      <button mat-button color="primary" (click)="onAboutClose()">Закрыть</button>
+    </div>
+  </div>
+</div>

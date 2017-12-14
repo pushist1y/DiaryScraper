@@ -316,6 +316,7 @@ namespace DiaryScraperCore
         private IEnumerable<string> FilterImageUrls(IEnumerable<string> imageUrls)
         {
             return imageUrls.Where(s =>
+                        !string.IsNullOrEmpty(s) &&
                         !s.Contains("favicon.ico") &&
                         (s.Contains("diary.ru") || (s.StartsWith("/") && !s.StartsWith("//")))
             ).Distinct();

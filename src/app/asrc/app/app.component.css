@@ -17,3 +17,8 @@
     /*height: 400px;*/
   }
   
+  h1 {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 16px;
+  }
