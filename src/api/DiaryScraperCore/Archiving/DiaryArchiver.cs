@@ -11,6 +11,8 @@ using AngleSharp;
 using AngleSharp.Dom.Html;
 using AngleSharp.Parser.Html;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace DiaryScraperCore
 {
@@ -94,6 +96,8 @@ namespace DiaryScraperCore
             var postFiles = Directory.GetFiles(ArchivePostsDir);
             Progress.SetTotal(postFiles.Count());
 
+            var postStrings = new List<string>();
+
             foreach (var postFile in postFiles)
             {
                 Progress.Values[ParseProgressNames.CurrentFile] = postFile;
@@ -127,7 +131,7 @@ namespace DiaryScraperCore
                     var newEl = indexDoc.CreateElement("div");
                     newEl.InnerHtml = sourcePostDiv.OuterHtml;
                     var postDiv = newEl.QuerySelector("div");
-                    barDiv.After(postDiv);
+                    //barDiv.After(postDiv);
 
                     postDiv.ClassList.Remove("countSecond");
                     postDiv.ClassList.Remove("countFirst");
@@ -143,7 +147,7 @@ namespace DiaryScraperCore
                     }
 
                     postDiv.QuerySelector(".postLinksBackg .urlLink a")?.SetAttribute("href", postLink);
-
+                    postStrings.Add(postDiv.OuterHtml);
                     postDoc.QuerySelector("#addCommentArea")?.Remove();
                     AddScripts(postDoc, "../");
                     ReplaceImageSources(postDoc, "../");
@@ -157,7 +161,7 @@ namespace DiaryScraperCore
             ReplaceLinkRef(indexDoc, "./");
             ReplaceImageSources(indexDoc, "./");
 
-            SetNav(indexDoc);
+            SetNav(indexDoc, postStrings);
 
             indexDoc.WriteToFile(indexPath, Encoding.GetEncoding(1251));
         }
@@ -272,7 +276,7 @@ namespace DiaryScraperCore
             }
         }
 
-        private void SetNav(IHtmlDocument indexDoc)
+        private void SetNav(IHtmlDocument indexDoc, IEnumerable<string> postStrings)
         {
             var tds = indexDoc.QuerySelectorAll("#pageBar tr.pages_str td");
             var tdPrev = tds.First();
@@ -295,7 +299,7 @@ namespace DiaryScraperCore
             var td = indexDoc.QuerySelectorAll("#pageBar tr").Last().QuerySelector("td");
             td.InnerHtml = "";
             td.Id = "tdPages";
-            var pageCount = Convert.ToInt32(Math.Ceiling(1.0 * indexDoc.QuerySelectorAll("div.singlePost").Count() / Constants.ArchivePageSize));
+            // var pageCount = Convert.ToInt32(Math.Ceiling(1.0 * indexDoc.QuerySelectorAll("div.singlePost").Count() / Constants.ArchivePageSize));
             // for (var i = 1; i <= pageCount; i++)
             // {
             //     var pageAnchor = indexDoc.CreateElement(i == 1 ? "strong" : "a");
@@ -306,11 +310,18 @@ namespace DiaryScraperCore
             //     td.AppendChild(pageAnchor);
             // }
 
+            var serializedData = JsonConvert.SerializeObject(postStrings.Reverse(), new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                Formatting = Formatting.Indented
+            });
+
             var script = indexDoc.CreateElement("script");
             script.SetAttribute("type", "text/javascript");
             script.InnerHtml = $@"
             $(function(){{
-                initPages({Constants.ArchivePageSize}, {pageCount});
+                postStrings = {serializedData};
+                initPages({Constants.ArchivePageSize});
             }});
                 
             ";

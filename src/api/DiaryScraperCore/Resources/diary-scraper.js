@@ -1,6 +1,7 @@
 var pageSize = 20;
 var pageCount = 10;
 var currentPage = 1;
+var postStrings = [];
 // $("div.singlePost").css('visibility', 'visible');
 
 
@@ -10,22 +11,23 @@ function showPage(pageIndex) {
 		pageIndex = 1;
 	}
 	currentPage = pageIndex;
-	var posts = $("div.singlePost");
-	posts.hide();
+	$("div.singlePost").remove();
 	var startIndex = (pageIndex - 1) * pageSize;
-	if (startIndex >= posts.lenth) {
-		startIndex = posts.length - 1;
+	if (startIndex >= postStrings.lenth) {
+		startIndex = postStrings.length - 1;
 	}
 
 	var endIndex = pageIndex * pageSize;
-	endIndex = Math.min(endIndex, posts.length);
+	endIndex = Math.min(endIndex, postStrings.length);
 	restoreAnchors();
 	var anchor = $("a.pageAnchor[page='" + pageIndex + "']");
 	$("<strong>").addClass("pageAnchor").attr("page", pageIndex).text(pageIndex).insertAfter(anchor);
 	anchor.remove();
 
 
-	posts.slice(startIndex, endIndex).show();
+	postStrings.slice(startIndex, endIndex).forEach(function(postString) {
+		$("<div>").html(postString).children().insertAfter("div#pageBar");
+	});
 }
 
 function nextPage() {
@@ -67,7 +69,7 @@ function pageClickHandler(e) {
 
 function initPages(pageSizeParam) {
 	pageSize = pageSizeParam;
-	pageCount = Math.ceil($("div.singlePost").length / pageSize);
+	pageCount = Math.ceil(postStrings.length / pageSize);
 	var td = $("#tdPages");
 	td.html();
 	for (var i = 1; i <= pageCount; i++) {
