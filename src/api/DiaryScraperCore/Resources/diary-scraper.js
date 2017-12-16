@@ -25,7 +25,7 @@ function showPage(pageIndex) {
 	anchor.remove();
 
 
-	postStrings.slice(startIndex, endIndex).forEach(function(postString) {
+	postStrings.slice(startIndex, endIndex).reverse().forEach(function(postString) {
 		$("<div>").html(postString).children().insertAfter("div#pageBar");
 	});
 }
