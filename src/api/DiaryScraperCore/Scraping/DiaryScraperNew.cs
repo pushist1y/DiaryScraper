@@ -328,7 +328,13 @@ namespace DiaryScraperCore
             dr.GenerateLocalPath(AccountPagesFileNames.DiaryMain);
             var dRes = await _downloader.Download(dr, false, _options.RequestDelay);
             var doc = await _parser.ParseAsync(dRes.DownloadedData.AsAnsiString());
-            var href = doc.QuerySelector("a[title='профиль']").GetAttribute("href");
+            
+            var href = doc.QuerySelector("a[title='профиль']")?.GetAttribute("href") ??
+                       doc.QuerySelector("#main_menu")?
+                            .QuerySelectorAll("a")
+                            .FirstOrDefault(a => a.HasAttribute("href") && a.GetAttribute("href").Contains("/member/?"))?
+                            .GetAttribute("href");
+
             var userId = Regex.Replace(href, @"\/member\/\?(\d+)$", "$1");
             cancellationToken.ThrowIfCancellationRequested();
 

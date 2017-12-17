@@ -128,6 +128,10 @@ namespace DiaryScraperCore
                         spanEl.Id = spanId + "_" + guid;
                     }
 
+                    AddScripts(postDoc, "../");
+                    ReplaceImageSources(postDoc, "../");
+                    ReplaceLinkRef(postDoc, "../");
+
                     var newEl = indexDoc.CreateElement("div");
                     newEl.InnerHtml = sourcePostDiv.OuterHtml;
                     var postDiv = newEl.QuerySelector("div");
@@ -147,11 +151,11 @@ namespace DiaryScraperCore
                     }
 
                     postDiv.QuerySelector(".postLinksBackg .urlLink a")?.SetAttribute("href", postLink);
-                    postStrings.Add(postDiv.OuterHtml);
+                    
                     postDoc.QuerySelector("#addCommentArea")?.Remove();
-                    AddScripts(postDoc, "../");
-                    ReplaceImageSources(postDoc, "../");
-                    ReplaceLinkRef(postDoc, "../");
+                    
+
+                    postStrings.Add(postDiv.OuterHtml);
 
                     postDoc.WriteToFile(postFile, Encoding.GetEncoding(1251));
                 }

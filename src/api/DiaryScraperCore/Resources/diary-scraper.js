@@ -25,9 +25,11 @@ function showPage(pageIndex) {
 	anchor.remove();
 
 
-	postStrings.slice(startIndex, endIndex).reverse().forEach(function(postString) {
+	postStrings.slice(startIndex, endIndex).reverse().forEach(function (postString) {
 		$("<div>").html(postString).children().insertAfter("div#pageBar");
 	});
+
+	setMoreLinks();
 }
 
 function nextPage() {
@@ -89,8 +91,7 @@ function initPages(pageSizeParam) {
 	showPage(1);
 }
 
-
-$(function () {
+function setMoreLinks() {
 	$("a.LinkMore").click(function (e) {
 		e.preventDefault();
 		var spanId = $(e.target).attr("id");
@@ -98,4 +99,9 @@ $(function () {
 		$("#" + spanId).show().css('visibility', 'visible');;
 		$(e.target).hide();
 	});
+}
+
+
+$(function () {
+	setMoreLinks();
 });

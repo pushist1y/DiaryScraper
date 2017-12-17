@@ -51,16 +51,16 @@ namespace DiaryScraperCore
                     await task;
                 }
             }
-            catch(AggregateException e)
+            catch (AggregateException e)
             {
-                foreach(var ee in e.InnerExceptions)
+                foreach (var ee in e.InnerExceptions)
                 {
                     _logger.LogError(ee, "Parsing error");
                 }
             }
             catch (Exception e)
             {
-                
+
                 _logger.LogError(e, "Parsing error");
             }
 
@@ -76,13 +76,16 @@ namespace DiaryScraperCore
                 {
                     return;
                 }
-                var profileLink = doc.QuerySelector("a[title='профиль']");
-                var href = profileLink.GetAttribute("href");
+                var href = doc.QuerySelector("a[title='профиль']")?.GetAttribute("href") ??
+                           doc.QuerySelector("#main_menu")?
+                                .QuerySelectorAll("a")
+                                .FirstOrDefault(a => a.HasAttribute("href") && a.GetAttribute("href").Contains("/member/?"))?
+                                .GetAttribute("href");
 
                 accountDto.UserId = Regex.Replace(href, @"\/member\/\?(\d+)$", "$1");
-                accountDto.UserName = profileLink.TextContent;
+                //accountDto.UserName = profileLink.TextContent;
 
-                var journalLink = doc.QuerySelector("#m_menu a");
+                var journalLink = doc.QuerySelector("#m_menu a") ?? doc.QuerySelector("#main_menu a");
                 var journalMatch = Regex.Match(journalLink.GetAttribute("href"), @"https?:\/\/(.*)\.diary\.ru");
                 if (journalLink.TextContent.Contains("ой дневник"))
                 {
@@ -190,7 +193,7 @@ namespace DiaryScraperCore
                 {
                     contant = doc.QuerySelector("#lm_right_content");
                 }
-
+                accountDto.UserName = contant.QuerySelector("b").TextContent;
                 accountDto.Avatar = contant.QuerySelector("img").GetAttribute("src");
                 foreach (var h6 in doc.QuerySelectorAll("h6"))
                 {
